@@ -32,7 +32,8 @@ async function recStart() {
   const d = new Date(), id = d.toISOString().replace(/[-:]/g, "").slice(0, 15);
   REC.session = { id, start: d.getTime(), end: null, samples: 0,
                   setup: { camera: state.camera, camH: settings.camH, fov: settings.fov,
-                           pitchOffset: settings.pitchOffset, pathMode: settings.pathMode, model: settings.model } };
+                           pitchOffset: settings.pitchOffset, fov: settings.fov, accBias: settings.accBias, gyroBias: settings.gyroBias,
+                           compassOffset: settings.compassOffset, gpsMaxAcc: settings.gpsMaxAcc, edgeMargin: settings.edgeMargin, edgeSens: settings.edgeSens, pathMode: settings.pathMode, model: settings.model } };
   REC.count = 0; REC.buf = [];
   await recTx(["sessions"], "readwrite", tx => tx.objectStore("sessions").put(REC.session));
   REC.timer = setInterval(recFlush, 2000);

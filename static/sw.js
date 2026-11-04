@@ -1,11 +1,11 @@
 // Service worker: keeps the whole app and its ML models on the phone so it runs with no Mac and
 // no network after the first load. App files are served from the cache and refreshed in the
 // background when the Mac happens to be reachable; models never change, so they stay cached.
-const VERSION = "rover-v5";
+const VERSION = "rover-v6";
 const TILES = "rover-tiles";                         // OpenStreetMap tiles seen on the phone
 const TILE_MAX = 4000;
 const APP = ["./", "manifest.webmanifest", "icon.svg", "js/core.js", "js/camera.js", "js/obstacles.js", "js/yolo.js", "js/cvision.js", "js/path.js",
-             "js/planner.js", "js/nav.js", "js/map.js", "js/recorder.js", "js/app.js"];
+             "js/planner.js", "js/nav.js", "js/map.js", "js/recorder.js", "js/app.js", "js/calib.js"];
 const VENDOR = ["vendor/tf.min.js", "vendor/opencv.js", "vendor/leaflet/leaflet.js", "vendor/leaflet/leaflet.css", "vendor/tf-backend-wasm.min.js", "vendor/coco-ssd.min.js",
                 "vendor/ort/ort.webgpu.min.js", "vendor/ort/ort-wasm-simd-threaded.jsep.mjs", "vendor/ort/ort-wasm-simd-threaded.jsep.wasm",
                 "vendor/models/yolo11n/yolo11n.onnx",

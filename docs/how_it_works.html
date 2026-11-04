@@ -232,7 +232,28 @@ and saves exports. Because Android does not let one app stop others, <b>Drive mo
 <p>Measured in the APK on the test phone: <b>YOLO11n on WebGPU, 11 fps (75–93 ms), OpenCV path 10–12 ms, 80 flow points</b>,
 Drive mode "do-not-disturb pinned".</p>
 
-<h2>11. Limits and next steps</h2>
+<h2 class="pb">11. Calibrating the sensors</h2>
+<p>The <b>🎯 Calibrate sensors</b> card (<code>static/js/calib.js</code>) corrects each sensor once per phone and mount.
+Everything is saved on the phone, and recordings store the values used.</p>
+<table>
+<tr><th>Step</th><th>What you do</th><th>What is computed</th></tr>
+<tr><td>1 · Tilt &amp; gyro</td><td>Phone flat on a table, 3 s still; turn it around (top ↔ bottom), 3 s again</td>
+<td>The table's slope flips sign between the two readings, the sensor's own bias does not:<br><code>bias = (m₁ + m₂)/2</code>, <code>slope = (m₁ − m₂)/2</code>. Gyro bias = its average while still. Movement or a phone not flat is refused.</td></tr>
+<tr><td>2 · Camera distance</td><td>Set the height; tap where an object at a measured distance meets the floor</td>
+<td>Tilt correction Δθ so that row gives exactly that distance: <code>Δθ = atan(h/D) − α</code> (§5)</td></tr>
+<tr><td>3 · Lens</td><td>Object of known width W at distance D; tap its left and right edges (Δu pixels apart)</td>
+<td><code>f = Δu · D / W</code>, field of view <code>= 2·atan((long side / 2) / f)</code></td></tr>
+<tr><td>4 · Compass</td><td>Figure 8 first (Android's own calibration). Then walk straight 30 s, or aim at a saved spot ≥ 20 m away</td>
+<td>Offset = circular mean of (GPS course − compass) while walking, or (GPS bearing to the spot − compass). Refused if readings spread more than ±25° or the offset exceeds 60°.</td></tr>
+<tr><td>5 · GPS</td><td>Choose the accuracy limit; "save spot precisely" while standing still 20 s</td>
+<td>Fixes worse than the limit are ignored. The saved spot is the average of all fixes weighted by 1/accuracy², about √n times more precise than one fix.</td></tr>
+<tr><td>6 · Path edges</td><td>Two sliders, watched live on the picture</td>
+<td><b>Keep away from edges</b> (0–60 cm, default 15) is the margin added to the rover's half-width in the planner's corridor (§7).
+<b>Edge sensitivity</b> (1–10, default 5) scales the Canny thresholds and flood-fill tolerance by <code>k = 1.25^(5 − s)</code>: higher finds fainter edges, lower crosses textured floors.</td></tr>
+</table>
+<p>Do step 1 before step 2, and redo step 2 after changing the lens value or the mount. Tested with simulated readings, the tilt step recovered a planted bias of (0.30, −0.20) m/s² and a 3.0° table slope exactly.</p>
+
+<h2>12. Limits and next steps</h2>
 <ul>
 <li>Distances assume a <b>flat floor</b>; slopes and steps give errors. Hanging obstacles (table tops) are seen by YOLO, not by the ground method.</li>
 <li>Very uniform floors with no texture give few flow points; strong reflections can fool the flood fill.</li>

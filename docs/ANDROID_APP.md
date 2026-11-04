@@ -73,10 +73,28 @@ still runs, but it isn't pinned (the pill says `pin-failed`).
 Each obstacle is shown as **obstacle · distance · angle (left/right) · width**, nearest first.
 Object names are never shown.
 
-### Calibrate once (better distances)
-1. Tap **🚶 Handheld (1.3 m)** or **🚗 Rover (0.2 m)**, or type the camera height.
-2. Put something on the floor at a measured distance (for example 2.00 m) and type the distance.
-3. **Tap the camera picture exactly where it touches the floor.** The card shows ✓ Calibrated.
+### Calibrate the sensors (once per phone and mount)
+The **🎯 Calibrate sensors** card has a checklist at the top. Do the steps in order:
+
+1. **Tilt & gyro:** lay the phone flat, screen up, on a table. Tap **Calibrate tilt & gyro** and don't
+   touch it for 3 s. Turn it around (top where the bottom was) and tap again. This works even on a table that isn't level.
+2. **Camera height & distance:** tap **🚶 Handheld** or **🚗 Rover**, or type the height. Put something on the floor at
+   a measured distance, type the distance, then **tap the picture exactly where it touches the floor**.
+3. **Lens (optional):** this phone's lens is already known. For another phone, stand a flat object of known width
+   (a door, an A4 sheet = 0.21 m) facing the camera at the distance from step 2. Tap **Measure lens**, then tap its
+   left and right edges.
+4. **Compass:** if the heading jumps, wave the phone in a figure 8. Then, outdoors, either tap **🚶 Walk straight**
+   and walk for up to 30 s with the camera forward, or save a spot at least 20 m away, pick it, aim the camera at it
+   and tap **🎯 Aim at it**.
+5. **GPS:** choose which accuracy is good enough (±10 m with open sky … ±50 m). **📍 Save this spot precisely**
+   averages 20 s of fixes, which gives better waypoints than one fix.
+6. **Path edges:** two sliders, which you can watch on the picture as you move them:
+   - **Keep away from edges** (0–60 cm, default 15 cm): the gap the rover keeps from the path edge and obstacles.
+     The green corridor gets wider.
+   - **Edge detection sensitivity** (1–10, default 5): higher stops at faint lines such as kerbs, grass edges and
+     tile joints. Lower crosses textured floors and shadows.
+
+**Reset all calibration** (bottom of the card, or in Settings) brings everything back to the defaults.
 
 ### GPS navigation
 - **📍 Save here** saves the current spot. **Tap the map** to add a destination anywhere.
@@ -178,7 +196,9 @@ output or crashed the WebView, and on the CPU they took about 4 s per frame. See
 | Camera pill red | Close other camera apps, then reopen the app. Check Settings → Apps → Rover Phone ML → Permissions → Camera. |
 | `IMU` grey, distances "—" | Hold the phone upright with the back camera facing forward. |
 | `GPS: searching…` | Go outdoors. Indoors it may never lock. |
-| Distances off by 10–30% | Check the camera height, then calibrate (§4). |
+| Distances off by 10–30% | Do calibration steps 1 and 2 (§4). |
+| Map arrow points the wrong way | Figure 8, then calibration step 4 (compass). |
+| Rover passes too close to edges / stops too often | Calibration step 6: raise *Keep away*, or lower the sensitivity. |
 | `drive mode: pin-failed` | Turn on Settings → Security → **App pinning**. |
 | `dnd-needs-permission` | Allow Do Not Disturb access for Rover Phone ML (the screen opens by itself once). |
 | Phone gets hot | Normal under full load. Drive mode keeps the speed steady. Avoid direct sun on the phone. |

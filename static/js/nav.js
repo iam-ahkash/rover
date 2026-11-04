@@ -43,7 +43,7 @@ function kfStep(f, z, R, dt, q) {
 
 function navOnGps(c, t) {
   nav.fixes++;
-  if (c.accuracy > 50) return;                     // too poor to use
+  if (c.accuracy > settings.gpsMaxAcc) return;     // too poor to use (limit set in Calibration)
   if (!nav.origin) {
     nav.origin = { lat: c.latitude, lon: c.longitude };
     nav.kx = kfNew(0, c.accuracy ** 2); nav.ky = kfNew(0, c.accuracy ** 2); nav.lastT = t;
@@ -75,6 +75,7 @@ function navOnOrientation(e) {
     else h = (360 - e.alpha) % 360;
   }
   if (h == null) return;
+  h = (h + (settings.compassOffset || 0) + 360) % 360;      // compass calibration (js/calib.js)
   nav.camHeading = nav.camHeading == null ? h : (nav.camHeading + 0.2 * wrap180(h - nav.camHeading) + 360) % 360;
   // while walking, GPS course is a good check on the compass (metal and magnets disturb it)
   nav.heading = nav.course == null ? nav.camHeading

@@ -47,8 +47,10 @@ function cvFreeMask(src, pw, ph, top) {
     cv.cvtColor(blur, ycc, cv.COLOR_RGB2YCrCb);
     cv.split(ycc, ch);
     const Y = ch.get(0), Cr = ch.get(1), Cb = ch.get(2); parts.push(Y, Cr, Cb);
-    cv.Canny(Y, eY, 80, 200);                        // only strong brightness edges
-    cv.Canny(Cr, eA, 12, 36); cv.Canny(Cb, eB, 12, 36);   // weak colour edges count
+    // edge sensitivity (Calibration slider, 1-10, default 5): higher = more edges, the fill stops sooner
+    const k = Math.pow(1.25, 5 - (settings.edgeSens || 5));
+    cv.Canny(Y, eY, 80 * k, 200 * k);                // only strong brightness edges
+    cv.Canny(Cr, eA, 12 * k, 36 * k); cv.Canny(Cb, eB, 12 * k, 36 * k);   // weak colour edges count
     cv.bitwise_or(eY, eA, edges); cv.bitwise_or(edges, eB, edges);
     cv.dilate(edges, edges, k3);                     // close small gaps so the fill can't leak
     // fill on (Y/3, 1.5 Cr, 1.5 Cb): brightness changes count a third as much as colour changes
@@ -60,7 +62,7 @@ function cvFreeMask(src, pw, ph, top) {
     cv.threshold(edges, inner, 0, 1, cv.THRESH_BINARY);
     if (top > 0) inner.roi(new cv.Rect(0, 0, pw, Math.min(ph, top))).setTo(new cv.Scalar(1));
     inner.delete();
-    const lo = new cv.Scalar(4, 5, 5), hi = new cv.Scalar(4, 5, 5), rect = new cv.Rect();
+    const lo = new cv.Scalar(4 * k, 5 * k, 5 * k), hi = new cv.Scalar(4 * k, 5 * k, 5 * k), rect = new cv.Rect();
     const flags = 8 | cv.FLOODFILL_MASK_ONLY | (255 << 8);
     for (const fx of [0.5, 0.35, 0.65, 0.2, 0.8]) {   // seeds along the bottom; skip ones on an edge
       for (const fy of [0.95, 0.88]) {

@@ -2,10 +2,11 @@
 // Everything runs on the phone; the Mac is only needed to load the page the first time
 // (after that the service worker serves it offline). Streaming to the Mac is optional (Settings).
 
-const ROVER_HALF_WIDTH = 0.20, MARGIN = 0.15;          // rover half width + safety margin (m)
+const ROVER_HALF_WIDTH = 0.20;                        // rover half width (m); safety margin = settings.edgeMargin
 const ACTION_COLOURS = { FORWARD: "#2fbf71", LEFT: "#f2a93b", RIGHT: "#f2a93b", STOP: "#e5484d", "NO PATH": "#e5484d" };
 const overlay = $("overlay"), octx = overlay.getContext("2d");
 let detector = null, gravity = null, ws = null;
+const resetGravity = () => { gravity = null; };   // after a tilt calibration
 
 // ---------- sensors ----------
 async function startSensors() {
@@ -16,12 +17,18 @@ async function startSensors() {
   } catch (e) { console.warn(e); }
   addEventListener("devicemotion", e => {
     const a = e.accelerationIncludingGravity || {}, r = e.rotationRate || {};
-    state.imu = { ax: a.x, ay: a.y, az: a.z, gx: r.beta, gy: r.gamma, gz: r.alpha };
     if (a.x == null) return;
-    const g = [a.x, a.y, a.z];                       // low-pass: steady gravity, ignores bumps
+    const raw = { ax: a.x, ay: a.y, az: a.z, gx: r.beta, gy: r.gamma, gz: r.alpha };
+    state.imuRaw = raw; calOnMotion(raw);              // js/calib.js measures the biases from these
+    const [bx, by] = settings.accBias, gb = settings.gyroBias;   // calibrated readings
+    state.imu = { ax: a.x - bx, ay: a.y - by, az: a.z,
+                  gx: r.beta == null ? null : r.beta - gb[0], gy: r.gamma == null ? null : r.gamma - gb[1],
+                  gz: r.alpha == null ? null : r.alpha - gb[2] };
+    const g = [state.imu.ax, state.imu.ay, state.imu.az];    // low-pass: steady gravity, ignores bumps
     gravity = gravity ? gravity.map((v, i) => v + 0.1 * (g[i] - v)) : g;
     const n = Math.hypot(...gravity), sign = /iPhone|iPad/.test(navigator.userAgent) ? -1 : 1;
     state.pitch = deg(Math.asin(Math.max(-1, Math.min(1, sign * gravity[2] / n))));  // back camera tilt down
+    state.roll = deg(Math.atan2(sign * gravity[0], sign * gravity[1]));               // sideways lean
     pill("s-imu", true);
   });
   const onOrient = e => {
@@ -34,9 +41,9 @@ async function startSensors() {
   if (!("geolocation" in navigator)) return pill("s-gps", false, "no GPS");
   navigator.geolocation.watchPosition(p => {
     const c = p.coords;
-    state.gps = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, speed: c.speed, course: c.heading };
+    state.gps = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, speed: c.speed, course: c.heading, t: p.timestamp };
     navOnGps(c, p.timestamp);
-    pill("s-gps", c.accuracy <= 50, `GPS ±${Math.round(c.accuracy)} m`);
+    pill("s-gps", c.accuracy <= settings.gpsMaxAcc, `GPS ±${Math.round(c.accuracy)} m`);
   }, err => pill("s-gps", false, err.code === 3 ? "GPS: searching…" : "GPS: " + err.message),
      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
 }
@@ -111,7 +118,7 @@ function render() {
     : `<li class="hint">nothing within ${OBST_MAX} m</li>`;
   if (state.ttc != null) $("dets").innerHTML = `<li style="color:${state.ttc < 1.5 ? "var(--stop)" : "var(--warn)"}"><b>closing in</b> on something ahead · ${state.ttc.toFixed(1)} s to contact (optical flow)</li>` + $("dets").innerHTML;
   const o = state.orient;
-  $("tilt").innerHTML = `${f(state.pitch, 1)}° ${state.pitch > 0 ? "down" : "up"} · roll ${f(o.gamma, 0)}°`;
+  $("tilt").innerHTML = `${f(state.pitch, 1)}° ${state.pitch > 0 ? "down" : "up"} · roll ${f(state.roll, 0)}°`;
   $("compass").textContent = state.heading == null ? "—" : `${f(state.heading, 0)}° ${cardinal(state.heading)}`;
   renderNav();
 }
@@ -138,6 +145,7 @@ function renderNav() {
 
 // ---------- calibration: tap where something touches the floor at a measured distance ----------
 overlay.addEventListener("click", e => {
+  if (calTap(e)) return;                       // lens / other calibration taps (js/calib.js)
   const [w, h] = state.frameSize || [0, 0], D = parseFloat($("cal-d").value);
   if (!w || !hasPitch()) return void ($("cal-msg").textContent = "Start first and hold the phone still.");
   if (!(D > 0)) return void ($("cal-msg").textContent = "Enter the measured distance first.");
@@ -148,7 +156,7 @@ overlay.addEventListener("click", e => {
     `That needs a ${offset.toFixed(0)}° correction — check the camera height and tap exactly where the object meets the floor.`);
   settings.pitchOffset = +offset.toFixed(2); settings.calibrated = true; saveSettings();
   boxTracks.forEach(t => t.dist = null);
-  showCalibration();
+  showCalibration(); showCalStatus();
 });
 function showCalibration() {
   $("cal-msg").style.color = settings.calibrated ? "var(--go)" : "var(--warn)";
@@ -197,9 +205,9 @@ $("set-path").onchange = e => { settings.pathMode = e.target.value; saveSettings
 $("set-grass").checked = settings.allowGrass;
 $("set-grass").onchange = e => { settings.allowGrass = e.target.checked; saveSettings(); };
 $("set-h").value = settings.camH;
-$("set-h").onchange = e => { settings.camH = parseFloat(e.target.value) || DEFAULTS.camH; saveSettings(); showCalibration(); };
+$("set-h").onchange = e => { settings.camH = parseFloat(e.target.value) || DEFAULTS.camH; saveSettings(); showCalibration(); showCalStatus(); };
 $("set-fov").value = settings.fov;
-$("set-fov").onchange = e => { settings.fov = parseFloat(e.target.value) || DEFAULTS.fov; settings.fovManual = true; saveSettings(); showCalibration(); };
+$("set-fov").onchange = e => { settings.fov = parseFloat(e.target.value) || DEFAULTS.fov; settings.fovManual = true; settings.fovCal = false; saveSettings(); showCalibration(); showCalStatus(); };
 $("set-cam").onchange = async e => {
   settings.camId = e.target.value; settings.fovManual = false; saveSettings();
   try { await openCamera(e.target.value || undefined); $("set-fov").value = settings.fov; pill("s-cam", true, state.camera); }
@@ -210,14 +218,10 @@ $("set-stream").onchange = e => {
   settings.stream = e.target.checked; saveSettings();
   if (settings.stream) connect(); else { ws?.close(); pill("s-net", false, "Mac: off"); }
 };
-const setHeight = m => { settings.camH = m; settings.pitchOffset = 0; settings.calibrated = false; $("set-h").value = m; saveSettings(); showCalibration(); };
+const setHeight = m => { settings.camH = m; settings.pitchOffset = 0; settings.calibrated = false; $("set-h").value = m; saveSettings(); showCalibration(); showCalStatus(); };
 $("preset-hand").onclick = () => setHeight(1.3);
 $("preset-rover").onclick = () => setHeight(0.2);
-$("cal-reset").onclick = () => {
-  Object.assign(settings, { pitchOffset: 0, fovManual: false, calibrated: false });
-  if (KNOWN_CAMS[state.camId]) settings.fov = KNOWN_CAMS[state.camId].fov;
-  $("set-fov").value = settings.fov; saveSettings(); showCalibration();
-};
+$("cal-reset").onclick = () => { if (confirm("Reset the calibration of all sensors?")) resetAllCalibration(); };
 $("wp-save").onclick = () => {
   if (addWaypoint($("wp-name").value.trim())) { $("wp-name").value = ""; renderNav(); }
   else $("nav-goal").textContent = "No GPS fix yet — can't save this spot.";
@@ -272,7 +276,7 @@ $("start").onclick = async () => {
   setDrive(true);
   await startSensors();
   for (let i = 0; i < 3; i++) {     // camera can be busy for a moment (another tab / app letting go)
-    try { await startCamera(); pill("s-cam", true, state.camera); break; }
+    try { await startCamera(); pill("s-cam", true, state.camera); showCalStatus(); break; }
     catch (e) { pill("s-cam", false, "camera: " + e.name + (e.name === "NotReadableError" ? " (close other tabs/apps using it)" : "")); await sleep(1500); }
   }
   connect();

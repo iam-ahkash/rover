@@ -10,6 +10,10 @@ const cardinal = h => ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(h 
 const DEFAULTS = {
   model: "yolo11n", camId: "", camH: 1.30, fov: 95.7, fovManual: false,
   pitchOffset: 0, calibrated: false, pathMode: "opencv", allowGrass: true, stream: false,
+  // sensor calibration (js/calib.js)
+  accBias: [0, 0], gyroBias: [0, 0, 0], accCal: false, fovCal: false,
+  compassOffset: 0, compassCal: null, gpsMaxAcc: 50,
+  edgeMargin: 0.15, edgeSens: 5,    // path edges: keep-away distance (m), edge sensitivity 1-10
 };
 const settings = (() => {
   try {

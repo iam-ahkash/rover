@@ -12,3 +12,7 @@ android/build/
 # recordings and benchmark logs contain GPS positions
 logs/
 .DS_Store
+
+# NPU experiments: TensorFlow Lite export work dir and the benchmark tool
+tools/tflite/
+tools/bench_bin/

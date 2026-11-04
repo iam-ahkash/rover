@@ -2,7 +2,7 @@
 // obstacles the object detector found, then tries headings from -35° to +35° and picks the one
 // with the longest clear corridor (as wide as the rover), preferring the goal direction and
 // avoiding sudden swings.
-// Uses globals from phone.html: focalPx, groundDistance, imageRowAt, ROVER_HALF_WIDTH, MARGIN, deg, rad.
+// Uses globals from phone.html: focalPx, groundDistance, imageRowAt, ROVER_HALF_WIDTH, settings.edgeMargin, deg, rad.
 
 const PLAN = { maxHeading: 35, step: 5, far: 8, stopD: 0.6, slowD: 2.0 };
 let planLast = 0, planSmooth = 0;
@@ -20,7 +20,7 @@ function floorPoints(path, w, h, fpx) {
 }
 
 function planPath(path, confirmed, w, h, goalRel) {
-  const fpx = focalPx(w, h), lane = ROVER_HALF_WIDTH + MARGIN;
+  const fpx = focalPx(w, h), lane = ROVER_HALF_WIDTH + settings.edgeMargin;
   const pts = hasPitch() ? floorPoints(path, w, h, fpx) : [];
   for (const t of confirmed) {                       // detected objects are obstacles too
     if (t.dist == null || t.xl == null) continue;
@@ -72,7 +72,7 @@ function planPath(path, confirmed, w, h, goalRel) {
 
 // Draw the free space, distance marks, chosen corridor and goal marker on the camera overlay.
 function drawPath(ctx, path, plan, w, h, goalLabel) {
-  const fpx = focalPx(w, h), sx = w / path.pw, sy = h / path.ph, lane = ROVER_HALF_WIDTH + MARGIN;
+  const fpx = focalPx(w, h), sx = w / path.pw, sy = h / path.ph, lane = ROVER_HALF_WIDTH + settings.edgeMargin;
   ctx.fillStyle = path.source === "ai" ? "rgba(0,200,200,.22)" : path.source === "opencv" ? "rgba(76,141,255,.22)" : "rgba(47,191,113,.22)";
   ctx.beginPath(); ctx.moveTo(0, h);
   for (let x = 0; x < path.pw; x++) ctx.lineTo((x + 0.5) * sx, Math.min(h, path.boundary[x] * sy));
