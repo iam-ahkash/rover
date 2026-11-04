@@ -1,0 +1,14 @@
+# Python
+tools/.venv/
+__pycache__/
+*.pyc
+# private keys: HTTPS cert for the Mac server and the APK signing key (keep these off GitHub)
+certs/
+android/keystore/
+*.jks
+# build leftovers (the APK itself is kept so it can be downloaded from GitHub)
+android/out/*.idsig
+android/build/
+# recordings and benchmark logs contain GPS positions
+logs/
+.DS_Store

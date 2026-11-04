@@ -1,0 +1,19 @@
+{
+  "settings_version": "0.0.8",
+  "datasets_dir": "/Users/ahkash/Desktop/PH3042 Rob and Auto/phone_ml_demo/tools/datasets",
+  "weights_dir": "weights",
+  "runs_dir": "runs",
+  "uuid": "56620c7502935f9ed0d37d87c4f24d5e324293efca8a80143b3947cd763359e6",
+  "sync": true,
+  "api_key": "",
+  "openai_api_key": "",
+  "clearml": true,
+  "comet": true,
+  "dvc": true,
+  "mlflow": true,
+  "raytune": true,
+  "tensorboard": false,
+  "wandb": false,
+  "vscode_msg": true,
+  "openvino_msg": false
+}

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Benchmark</title>
+<style>
+  :root { --bg:#0e1116; --panel:#171b22; --line:#2a303a; --text:#e8ebf0; --muted:#8a93a3; --go:#2fbf71; --warn:#f2a93b; --stop:#e5484d; --accent:#4c8dff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.4 system-ui, sans-serif; padding:12px 16px 32px; }
+  h1 { font-size:18px; margin:4px 0 8px; }
+  button { padding:14px; width:100%; font-size:16px; font-weight:600; border:0; border-radius:10px; background:var(--accent); color:#fff; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .tile { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px; }
+  .tile h2 { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:2px 2px 6px; }
+  canvas { width:100%; display:block; border-radius:6px; background:#000; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; font-variant-numeric:tabular-nums; }
+  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:500; }
+  #log { font:12px ui-monospace, Menlo, monospace; color:var(--muted); white-space:pre-wrap; margin-top:10px; }
+  video { display:none; }
+</style>
+</head>
+<body>
+<h1>📊 Model benchmark (on this phone)</h1>
+<button id="go">Run benchmark</button>
+<table id="res"><thead><tr><th>Model</th><th>Engine</th><th>Size</th><th>Load</th><th>Median</th><th>fps</th></tr></thead><tbody></tbody></table>
+<div class="grid">
+  <div class="tile"><h2>COCO-SSD (now)</h2><canvas id="c-ssd"></canvas></div>
+  <div class="tile"><h2>YOLO11n</h2><canvas id="c-yolo"></canvas></div>
+  <div class="tile"><h2>Camera</h2><canvas id="c-cam"></canvas></div>
+</div>
+<h2 style="font-size:12px;color:var(--muted);margin:12px 0 0">DEPTH, BRIGHT = NEAR (each run)</h2>
+<div class="grid" id="depths"></div>
+<div id="log"></div>
+<video id="video" playsinline muted autoplay></video>
+<select id="set-cam" style="display:none"><option value=""></option></select>
+
+<script src="vendor/tf.min.js"></script>
+<script src="vendor/coco-ssd.min.js"></script>
+<script src="vendor/ort/ort.webgpu.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/camera.js"></script>
+<script>
+const log = m => { $("log").textContent += m + "\n"; console.log(m); };
+const results = [], depthOut = [];
+const ONLY = new URLSearchParams(location.search).get("only");      // ?only=depth or ?only=yolo
+const median = a => { const s = a.slice().sort((p, q) => p - q); return s[s.length >> 1]; };
+ort.env.wasm.wasmPaths = new URL("vendor/ort/", location.href).href;
+ort.env.wasm.proxy = true;                 // run in a worker so the page stays responsive
+ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.min(4, navigator.hardwareConcurrency || 4) : 1;
+
+function addRow(r) {
+  results.push(r);
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${r.model}</td><td>${r.engine}</td><td>${r.mb} MB</td><td>${r.error ? "—" : (r.loadMs / 1000).toFixed(1) + " s"}</td>` +
+    (r.error ? `<td colspan="2" style="color:var(--stop)">${r.error.slice(0, 60)}</td>` :
+     `<td>${r.median.toFixed(0)} ms</td><td>${(1000 / r.median).toFixed(1)}</td>`);
+  $("res").querySelector("tbody").appendChild(tr);
+}
+
+async function timeRuns(fn, n, warm = 2) {
+  for (let i = 0; i < warm; i++) await fn();
+  const t = [];
+  for (let i = 0; i < n; i++) { const t0 = performance.now(); await fn(); t.push(performance.now() - t0); await sleep(30); }
+  return t;
+}
+
+function frameTo(w, h, letterbox) {      // video frame -> canvas of w x h (letterboxed for YOLO)
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d", { willReadFrequently: true }), vw = video.videoWidth, vh = video.videoHeight;
+  if (letterbox) {
+    x.fillStyle = "rgb(114,114,114)"; x.fillRect(0, 0, w, h);
+    const s = Math.min(w / vw, h / vh); x.drawImage(video, 0, 0, vw * s, vh * s); c.scale = s;
+  } else x.drawImage(video, 0, 0, w, h);
+  return c;
+}
+function chw(canvas, mean, std, half) {    // RGBA canvas -> float CHW tensor data
+  const { width: w, height: h } = canvas, d = canvas.getContext("2d").getImageData(0, 0, w, h).data, n = w * h;
+  const out = new Float32Array(3 * n);
+  for (let i = 0; i < n; i++) for (let k = 0; k < 3; k++) out[k * n + i] = (d[4 * i + k] / 255 - mean[k]) / std[k];
+  if (!half) return out;
+  const u = new Uint16Array(out.length);   // float32 -> float16 bits
+  const f = new Float32Array(1), b = new Uint32Array(f.buffer);
+  for (let i = 0; i < out.length; i++) {
+    f[0] = out[i]; const x = b[0], s = (x >>> 16) & 0x8000, e = ((x >>> 23) & 0xff) - 112, m = x & 0x7fffff;
+    u[i] = e <= 0 ? s : e >= 31 ? s | 0x7c00 : s | (e << 10) | (m >>> 13);
+  }
+  return u;
+}
+function snapshot(id) {
+  const c = $(id); c.width = video.videoWidth; c.height = video.videoHeight;
+  const x = c.getContext("2d"); x.drawImage(video, 0, 0); return x;
+}
+function drawBoxes(id, boxes, colour) {
+  const x = snapshot(id); x.lineWidth = 2; x.strokeStyle = colour; x.font = "bold 12px system-ui"; x.fillStyle = colour;
+  for (const b of boxes) { x.strokeRect(b[0], b[1], b[2], b[3]); x.fillText((b[4] * 100 | 0) + "%", b[0] + 2, b[1] + 12); }
+}
+
+// ---------- YOLO11n decode: [1, 84, 2100] -> boxes, class ignored (any obstacle) ----------
+function yoloBoxes(out, scale, thr = 0.3) {
+  const d = out.data, N = out.dims[2], C = out.dims[1] - 4, cand = [];
+  for (let i = 0; i < N; i++) {
+    let s = 0; for (let c = 0; c < C; c++) { const v = d[(4 + c) * N + i]; if (v > s) s = v; }
+    if (s < thr) continue;
+    const cx = d[i], cy = d[N + i], w = d[2 * N + i], h = d[3 * N + i];
+    cand.push([(cx - w / 2) / scale, (cy - h / 2) / scale, w / scale, h / scale, s]);
+  }
+  cand.sort((a, b) => b[4] - a[4]);
+  const keep = [];
+  const iou = (a, b) => { const x1 = Math.max(a[0], b[0]), y1 = Math.max(a[1], b[1]), x2 = Math.min(a[0] + a[2], b[0] + b[2]), y2 = Math.min(a[1] + a[3], b[1] + b[3]);
+    const I = Math.max(0, x2 - x1) * Math.max(0, y2 - y1); return I / (a[2] * a[3] + b[2] * b[3] - I); };
+  for (const c of cand) if (keep.every(k => iou(k, c) < 0.45)) keep.push(c);
+  return keep;
+}
+
+async function benchSSD() {
+  const r = { model: "COCO-SSD lite (now)", engine: "tfjs " + tf.getBackend(), mb: 19 };
+  try {
+    const t0 = performance.now();
+    const m = await cocoSsd.load({ base: "lite_mobilenet_v2", modelUrl: "vendor/models/ssdlite_mobilenet_v2/model.json" });
+    r.loadMs = performance.now() - t0;
+    let dets; r.times = await timeRuns(async () => { dets = await m.detect(video, 20, 0.3); }, 15);
+    r.median = median(r.times); r.boxes = dets.length;
+    drawBoxes("c-ssd", dets.map(d => [...d.bbox, d.score]), "#f2a93b");
+    m.dispose?.();
+  } catch (e) { r.error = e.message; }
+  addRow(r);
+}
+
+async function benchYOLO(ep) {
+  const r = { model: "YOLO11n 320", engine: "onnx " + ep, mb: 10.6 };
+  try {
+    const t0 = performance.now();
+    const s = await ort.InferenceSession.create("vendor/models/yolo11n/yolo11n.onnx", { executionProviders: [ep], graphOptimizationLevel: "all" });
+    r.loadMs = performance.now() - t0;
+    let boxes; r.times = await timeRuns(async () => {
+      const c = frameTo(320, 320, true);
+      const out = await s.run({ [s.inputNames[0]]: new ort.Tensor("float32", chw(c, [0, 0, 0], [1, 1, 1]), [1, 3, 320, 320]) });
+      boxes = yoloBoxes(out[s.outputNames[0]], c.scale);
+    }, 15);
+    r.median = median(r.times); r.boxes = boxes.length;
+    drawBoxes("c-yolo", boxes, "#2fbf71");
+    await s.release?.();
+  } catch (e) { r.error = String(e.message || e); }
+  addRow(r);
+}
+
+async function benchDepth(file, ep) {
+  const half = false;                       // both files take float32 input (fp16 is inside the model)
+  const isFp16 = file.includes("model_fp16");
+  const r = { model: `Depth Anything V2 S ${isFp16 ? "fp16" : "4-bit"}`, engine: "onnx " + ep, mb: isFp16 ? 49.6 : 19.1 };
+  try {
+    const t0 = performance.now();
+    const s = await ort.InferenceSession.create(`vendor/models/depth_anything_v2_small/${file}`, { executionProviders: [ep], graphOptimizationLevel: "all" });
+    r.loadMs = performance.now() - t0;
+    const portrait = video.videoHeight >= video.videoWidth, W = portrait ? 196 : 252, H = portrait ? 252 : 196;
+    let depth; r.times = await timeRuns(async () => {
+      const c = frameTo(W, H, false);
+      const out = await s.run({ [s.inputNames[0]]: new ort.Tensor(half ? "float16" : "float32",
+        chw(c, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225], half), [1, 3, H, W]) });
+      depth = out[s.outputNames[0]];
+    }, 6, 1);
+    r.median = median(r.times);
+    const d = depth.data instanceof Uint16Array ? Float32Array.from(depth.data, h => {   // fp16 -> number
+      const sg = h & 0x8000 ? -1 : 1, e = (h >> 10) & 31, m = h & 1023;
+      return e ? sg * 2 ** (e - 15) * (1 + m / 1024) : sg * 2 ** -14 * (m / 1024); }) : Float32Array.from(depth.data);
+    let lo = Infinity, hi = -Infinity, nan = 0;
+    for (const v of d) { if (!Number.isFinite(v)) { nan++; continue; } if (v < lo) lo = v; if (v > hi) hi = v; }
+    Object.assign(r, { nan, lo: +lo.toFixed(3), hi: +hi.toFixed(3), key: (isFp16 ? "fp16" : "q4") });
+    depthOut.push({ r, d, ep });
+    const [dh, dw] = depth.dims.slice(-2), tile = document.createElement("div");
+    tile.className = "tile"; tile.innerHTML = `<h2>${r.model.replace("Depth Anything V2 S ", "depth ")} · ${ep}</h2>`;
+    const c = document.createElement("canvas"); c.width = dw; c.height = dh; tile.appendChild(c);
+    $("depths").appendChild(tile);
+    const x = c.getContext("2d"), img = x.createImageData(dw, dh);
+    for (let i = 0; i < dw * dh; i++) {
+      const v = Number.isFinite(d[i]) ? (d[i] - lo) / (hi - lo || 1) : 0;
+      img.data[4 * i] = 255 * Math.min(1, v * 2); img.data[4 * i + 1] = 255 * v * v; img.data[4 * i + 2] = 255 * (1 - v) * 0.6; img.data[4 * i + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    await s.release?.();
+  } catch (e) { r.error = String(e.message || e); }
+  addRow(r);
+}
+
+$("go").onclick = async () => {
+  $("go").disabled = true; $("go").textContent = "Running… keep the phone still, pointed at a scene";
+  try { await startCamera(); } catch (e) { log("camera failed: " + e.name); return; }
+  await sleep(1500);
+  snapshot("c-cam");
+  log(`camera ${state.camera} · webgpu ${!!navigator.gpu} · isolated ${self.crossOriginIsolated} · threads ${ort.env.wasm.numThreads} · cores ${navigator.hardwareConcurrency}`);
+  await tf.setBackend("webgl"); await tf.ready();
+  if (!ONLY) { await benchSSD(); tf.engine().reset?.(); }
+  const eps = ["wasm"]; if (navigator.gpu) eps.push("webgpu");   // wasm first: a failed webgpu start can block it
+  if (ONLY !== "depth") for (const ep of eps) await benchYOLO(ep);
+  if (ONLY !== "yolo") {
+    for (const ep of eps) await benchDepth("model_q4f16.onnx", ep);
+    for (const ep of eps) await benchDepth("model_fp16.onnx", ep);
+    // does each run agree with the CPU (wasm) result of the fp16 model? (same frame is not guaranteed,
+    // so keep the phone still; > 0.95 means the same depth map)
+    const ref = depthOut.find(o => o.r.key === "fp16" && o.ep === "wasm") || depthOut.find(o => o.ep === "wasm");
+    const corr = (a, b) => { let n = 0, sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0;
+      for (let i = 0; i < a.length; i++) { const x = a[i], y = b[i]; if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+        n++; sa += x; sb += y; saa += x * x; sbb += y * y; sab += x * y; }
+      return n ? (n * sab - sa * sb) / Math.sqrt((n * saa - sa * sa) * (n * sbb - sb * sb)) : NaN; };
+    for (const o of depthOut) {
+      o.r.corrCPU = ref && o.d.length === ref.d.length ? +corr(o.d, ref.d).toFixed(3) : null;
+      log(`${o.r.model} ${o.ep}: NaN ${o.r.nan}, range ${o.r.lo}..${o.r.hi}, agreement with CPU fp16 ${o.r.corrCPU}`);
+    }
+  }
+  $("go").textContent = "Done — sending results to the Mac…";
+  const info = { ua: navigator.userAgent, camera: state.camera, webgpu: !!navigator.gpu, isolated: self.crossOriginIsolated,
+                 threads: ort.env.wasm.numThreads, cores: navigator.hardwareConcurrency };
+  try {
+    const res = await fetch("api/bench", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ info, results: results.map(({ times, ...r }) => ({ ...r, times: times?.map(t => +t.toFixed(1)) })) }) });
+    $("go").textContent = res.ok ? "Done ✓ (results saved on the Mac)" : "Done (Mac didn't save)";
+  } catch { $("go").textContent = "Done (Mac not reachable)"; }
+};
+</script>
+</body>
+</html>

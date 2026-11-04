@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rover Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root { --bg:#0e1116; --panel:#171b22; --line:#2a303a; --text:#e8ebf0; --muted:#8a93a3;
+          --go:#2fbf71; --warn:#f2a93b; --stop:#e5484d; --accent:#4c8dff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 -apple-system, system-ui, sans-serif;
+         padding:16px; }
+  header { display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+  h1 { font-size:18px; margin:0; }
+  .pill { font-size:12px; padding:3px 10px; border-radius:99px; border:1px solid var(--line); color:var(--muted); }
+  .pill.ok { color:var(--go); border-color:var(--go); }
+  .layout { display:grid; grid-template-columns:minmax(0, 1.4fr) minmax(0, 1fr); gap:12px; }
+  @media (max-width: 800px) { .layout { grid-template-columns:1fr; } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0 0 8px; }
+  .stage { position:relative; width:100%; aspect-ratio:4/3; background:#000; border-radius:8px; overflow:hidden; }
+  #frame, #ov { position:absolute; inset:0; width:100%; height:100%; }
+  #frame { object-fit:fill; }
+  #decision { font-size:40px; font-weight:800; letter-spacing:.02em; }
+  .side { display:grid; gap:12px; align-content:start; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .v { font-family:ui-monospace, Menlo, monospace; font-size:13px; font-variant-numeric:tabular-nums; }
+  canvas.spark { width:100%; height:70px; display:block; }
+  .legend span { margin-right:10px; font-size:12px; }
+  a { color:var(--accent); }
+  #dial { width:120px; height:120px; display:block; margin:auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🛰 Rover Dashboard</h1>
+  <span id="link" class="pill">server</span>
+  <span id="phone" class="pill">phone: not connected</span>
+  <span id="perf" class="pill">—</span>
+</header>
+
+<div class="layout">
+  <div class="card">
+    <h2>Phone camera + ML detections</h2>
+    <div class="stage"><img id="frame" alt=""><canvas id="ov"></canvas></div>
+    <div class="v" id="dets" style="margin-top:8px">—</div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <h2>ML driving decision</h2>
+      <div id="decision">—</div>
+      <div class="v" id="cmd">steer — · throttle —</div>
+      <div class="v" id="clear" style="color:var(--muted)"></div>
+    </div>
+    <div class="card">
+      <h2>GPS position &amp; trail</h2>
+      <div id="map" style="height:300px;border-radius:8px;background:#0e1116"></div>
+      <div class="v" id="navinfo" style="margin-top:6px">waiting for GPS…</div>
+    </div>
+    <div class="card">
+      <h2>Path radar (top view, metres)</h2>
+      <canvas id="radar" width="600" height="420" style="width:100%;display:block"></canvas>
+      <div class="v" id="mlinfo" style="color:var(--muted);margin-top:6px">—</div>
+    </div>
+    <div class="two">
+      <div class="card"><h2>Compass</h2><canvas id="dial" width="240" height="240"></canvas>
+        <div class="v" id="heading" style="text-align:center">—</div></div>
+      <div class="card"><h2>Tilt</h2><div class="v" id="tilt">—</div>
+        <h2 style="margin-top:12px">GPS</h2><div class="v" id="gps">—</div></div>
+    </div>
+    <div class="card">
+      <h2>Gyroscope (°/s)</h2><canvas class="spark" id="gyroPlot"></canvas>
+      <div class="legend"><span style="color:#e5484d">■ x</span><span style="color:#2fbf71">■ y</span><span style="color:#4c8dff">■ z</span></div>
+    </div>
+    <div class="card">
+      <h2>Accelerometer (m/s²)</h2><canvas class="spark" id="accPlot"></canvas>
+      <div class="legend"><span style="color:#e5484d">■ x</span><span style="color:#2fbf71">■ y</span><span style="color:#4c8dff">■ z</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const f = (x, d = 2) => (x == null || isNaN(x)) ? "—" : Number(x).toFixed(d);
+const colors = { FORWARD: "#2fbf71", LEFT: "#f2a93b", RIGHT: "#f2a93b", STOP: "#e5484d", "NO PATH": "#e5484d" };
+const hist = { gyro: [], acc: [] };
+let lastUrl = null, last = null;
+
+function connect() {
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/dash`);
+  ws.binaryType = "blob";
+  ws.onopen = () => { $("link").className = "pill ok"; $("link").textContent = "server"; };
+  ws.onclose = () => { $("link").className = "pill"; $("link").textContent = "server: reconnecting"; setTimeout(connect, 1500); };
+  ws.onmessage = ev => {
+    if (ev.data instanceof Blob) {            // camera frame
+      const url = URL.createObjectURL(ev.data);
+      $("frame").src = url;
+      if (lastUrl) URL.revokeObjectURL(lastUrl);
+      lastUrl = url;
+      return;
+    }
+    const m = JSON.parse(ev.data);
+    if (m.type === "status") {
+      $("phone").className = "pill " + (m.phones ? "ok" : "");
+      $("phone").textContent = m.phones ? "phone: connected" : "phone: not connected";
+    } else if (m.type === "state") { last = m; update(m); }
+  };
+}
+
+function update(m) {
+  const d = m.decision || {};
+  $("decision").textContent = d.action || "—";
+  $("decision").style.color = colors[d.action] || "inherit";
+  $("cmd").textContent = `steer ${f(d.steer)} · throttle ${f(d.throttle)}`;
+  $("clear").textContent = `heading ${f(d.heading, 0)}° · clear ${f(d.clear, 1)} m along it · ` +
+    `straight ahead ${f(d.ahead, 1)} m · path ${m.path ? m.path.src + " " + Math.round(m.path.free * 100) + "%" : "—"}` +
+    (d.goal != null ? ` · goal ${d.goal}°` : "");
+  updateMap(m.nav);
+  $("perf").textContent = `${m.fps ?? 0} fps · ${m.inferMs ?? "—"} ms inference on phone (${m.backend || "?"})`;
+  $("mlinfo").innerHTML = `model ${m.model || "—"} · ${m.camera || "—"}<br>` +
+    `stereo: ${m.stereo || "—"} · cam height ${f(m.camH)} m · FOV ${f(m.fov, 1)}° · tilt ${f(m.pitch, 1)}°`;
+  const tr = m.tracks || [];
+  $("dets").innerHTML = tr.length
+    ? tr.map(x => `<b>${x.cls}</b> ${x.dist != null ? f(x.dist) + " m" : "?"} <span style="color:var(--muted)">(${x.method}${x.disp != null ? ", shift " + f(x.disp, 1) + " px" : ""})</span>`).join("  ·  ")
+    : "no objects";
+  radar(tr, d);
+  const i = m.imu || {}, o = m.orient || {}, g = m.gps;
+  $("tilt").innerHTML = `pitch ${f(o.beta, 0)}°<br>roll ${f(o.gamma, 0)}°`;
+  $("gps").innerHTML = g
+    ? `${f(g.lat, 6)}<br>${f(g.lon, 6)}<br>±${f(g.acc, 0)} m<br><a target="_blank" href="https://www.openstreetmap.org/?mlat=${g.lat}&mlon=${g.lon}#map=19/${g.lat}/${g.lon}">open map</a>`
+    : "no fix";
+  $("heading").textContent = m.heading == null ? "—" : `${f(m.heading, 0)}°`;
+  push(hist.gyro, [i.gx, i.gy, i.gz]); push(hist.acc, [i.ax, i.ay, i.az]);
+  plot($("gyroPlot"), hist.gyro); plot($("accPlot"), hist.acc);
+  dial(m.heading);
+  drawBoxes(m);
+}
+function push(arr, v) { arr.push(v.map(x => x ?? 0)); if (arr.length > 100) arr.shift(); }
+
+function plot(c, data) {
+  const w = c.width = c.clientWidth * devicePixelRatio, h = c.height = 70 * devicePixelRatio;
+  const ctx = c.getContext("2d");
+  const max = Math.max(1, ...data.flat().map(Math.abs));
+  ctx.strokeStyle = "#2a303a"; ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
+  ["#e5484d", "#2fbf71", "#4c8dff"].forEach((col, k) => {
+    ctx.strokeStyle = col; ctx.lineWidth = 1.5 * devicePixelRatio; ctx.beginPath();
+    data.forEach((v, j) => {
+      const x = j / 99 * w, y = h / 2 - v[k] / max * (h / 2 - 4);
+      j ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    });
+    ctx.stroke();
+  });
+}
+
+function dial(hd) {
+  const c = $("dial"), ctx = c.getContext("2d"), r = 100;
+  ctx.clearRect(0, 0, 240, 240); ctx.save(); ctx.translate(120, 120);
+  ctx.strokeStyle = "#2a303a"; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.stroke();
+  ctx.fillStyle = "#8a93a3"; ctx.font = "bold 20px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  [["N", 0], ["E", 90], ["S", 180], ["W", 270]].forEach(([t, a]) => {
+    const rad = a * Math.PI / 180; ctx.fillText(t, Math.sin(rad) * 78, -Math.cos(rad) * 78);
+  });
+  if (hd != null) {
+    ctx.rotate(hd * Math.PI / 180);
+    ctx.fillStyle = "#e5484d"; ctx.beginPath(); ctx.moveTo(0, -60); ctx.lineTo(10, 0); ctx.lineTo(-10, 0); ctx.fill();
+    ctx.fillStyle = "#8a93a3"; ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(10, 0); ctx.lineTo(-10, 0); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawBoxes(m) {
+  const c = $("ov"), [W, H] = m.frameSize || [640, 480];
+  if (m.frameSize) {
+    const st = document.querySelector(".stage");
+    st.style.aspectRatio = `${W} / ${H}`;
+    st.style.width = `min(100%, ${(72 * W / H).toFixed(1)}vh)`; st.style.margin = "0 auto";
+  }
+  c.width = W; c.height = H;
+  const ctx = c.getContext("2d");
+  const p = m.path;
+  if (p && p.b) {                                        // free space found on the phone
+    const sx = W / p.pw, sy = H / p.ph;
+    ctx.fillStyle = p.src === "ai" ? "rgba(0,200,200,.25)" : "rgba(47,191,113,.25)";
+    ctx.beginPath(); ctx.moveTo(0, H);
+    p.b.forEach((b, x) => ctx.lineTo((x + 0.5) * sx, b * sy));
+    ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+  }
+  ctx.lineWidth = 3; ctx.font = "bold 16px system-ui";
+  for (const d of m.tracks || []) {
+    const [x, y, w, h] = d.bbox;
+    const label = `${d.cls} ${d.dist != null ? d.dist.toFixed(2) + " m" : ""}`;
+    const col = /stereo/.test(d.method) ? "#b07cff" : "#4c8dff";
+    ctx.strokeStyle = col; ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = col; ctx.fillRect(x, Math.max(0, y - 22), ctx.measureText(label).width + 10, 22);
+    ctx.fillStyle = "#fff"; ctx.fillText(label, x + 5, Math.max(16, y - 6));
+  }
+}
+
+// Top view: rover at the bottom centre, obstacles placed by distance and sideways offset.
+function radar(tracks, dec) {
+  const c = $("radar"), ctx = c.getContext("2d"), W = c.width, H = c.height;
+  const maxD = 5, sc = (H - 30) / maxD, ox = W / 2, oy = H - 15;
+  const X = m => ox + m * sc, Y = d => oy - d * sc;
+  ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = "#2a303a"; ctx.fillStyle = "#8a93a3"; ctx.font = "13px system-ui"; ctx.lineWidth = 1;
+  for (let d = 1; d <= maxD; d++) {
+    ctx.beginPath(); ctx.arc(ox, oy, d * sc, Math.PI, 2 * Math.PI); ctx.stroke();
+    ctx.fillText(`${d} m`, ox + 4, Y(d) + 14);
+  }
+  // free-space edge points from the phone (grey = path edge, blue = detected object)
+  for (const [x, z, obj] of dec.pts || []) {
+    if (z > maxD) continue;
+    ctx.fillStyle = obj ? "#4c8dff" : "#8a93a3";
+    ctx.fillRect(X(x) - 2, Y(z) - 2, 4, 4);
+  }
+  // clearance per candidate heading (fan) and the chosen heading
+  for (const [a, cl] of dec.cands || []) {
+    const r = a * Math.PI / 180, d = Math.min(cl, maxD);
+    ctx.strokeStyle = cl < 0.6 ? "rgba(229,72,77,.5)" : "rgba(47,191,113,.35)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(X(d * Math.sin(r)), Y(d * Math.cos(r))); ctx.stroke();
+  }
+  if (dec.heading != null) {
+    const r = dec.heading * Math.PI / 180, d = Math.min(dec.clear ?? maxD, maxD);
+    ctx.strokeStyle = colors[dec.action] || "#e8ebf0"; ctx.lineWidth = 0.7 * sc;
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(X(d * Math.sin(r)), Y(d * Math.cos(r))); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  if (dec.goal != null) {
+    const r = Math.max(-80, Math.min(80, dec.goal)) * Math.PI / 180;
+    ctx.fillStyle = "#ffd23f"; ctx.font = "bold 14px system-ui";
+    ctx.fillText("★ goal", X(maxD * 0.85 * Math.sin(r)) - 20, Y(maxD * 0.85 * Math.cos(r)));
+    ctx.font = "13px system-ui";
+  }
+  ctx.fillStyle = "#e8ebf0"; ctx.fillRect(ox - 0.2 * sc, oy - 6, 0.4 * sc, 12);   // the rover
+  for (const t of tracks) {
+    if (t.dist == null || t.xl == null) continue;
+    const col = /stereo/.test(t.method) ? "#b07cff" : "#4c8dff";
+    const x1 = X(Math.max(-3, t.xl)), x2 = X(Math.min(3, t.xr)), y = Y(Math.min(maxD, t.dist));
+    ctx.fillStyle = col; ctx.fillRect(Math.min(x1, x2), y - 4, Math.max(4, Math.abs(x2 - x1)), 8);
+    ctx.fillText(`${t.cls} ${t.dist.toFixed(1)}`, Math.min(x1, x2), y - 8);
+  }
+}
+
+// ---------- map (OpenStreetMap tiles, Mac needs internet; the phone does not) ----------
+let map = null, me = null, accCircle = null, trail = null, goalLine = null, wpLayer = null, lastWp = "";
+function updateMap(n) {
+  if (!n || n.lat == null || typeof L === "undefined") return;
+  const pos = [n.lat, n.lon];
+  if (!map) {
+    map = L.map("map").setView(pos, 18);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      { maxZoom: 20, maxNativeZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+    trail = L.polyline([], { color: "#4c8dff", weight: 4 }).addTo(map);
+    accCircle = L.circle(pos, { radius: n.acc || 5, color: "#4c8dff", weight: 1, fillOpacity: 0.15 }).addTo(map);
+    me = L.circleMarker(pos, { radius: 7, color: "#fff", fillColor: "#4c8dff", fillOpacity: 1 }).addTo(map);
+    goalLine = L.polyline([], { color: "#ffd23f", dashArray: "6 6" }).addTo(map);
+    wpLayer = L.layerGroup().addTo(map);
+  }
+  me.setLatLng(pos); accCircle.setLatLng(pos).setRadius(n.acc || 5);
+  const pts = trail.getLatLngs(), last = pts[pts.length - 1];
+  if (!last || map.distance(last, pos) > 2) trail.addLatLng(pos);
+  if (!map.getBounds().pad(-0.2).contains(pos)) map.panTo(pos);
+  const wpKey = JSON.stringify(n.waypoints);
+  if (wpKey !== lastWp) {
+    lastWp = wpKey; wpLayer.clearLayers();
+    (n.waypoints || []).forEach(w => L.marker([w.lat, w.lon]).bindTooltip(w.name, { permanent: true }).addTo(wpLayer));
+  }
+  const g = n.goal, wp = g && (n.waypoints || []).find(w => w.name === g.name);
+  goalLine.setLatLngs(wp ? [pos, [wp.lat, wp.lon]] : []);
+  $("navinfo").innerHTML = `${n.lat.toFixed(6)}, ${n.lon.toFixed(6)} · ±${f(n.acc, 1)} m · ${f(n.speed, 1)} m/s · ` +
+    `heading ${n.heading ?? "—"}° · walked ${f(n.walked, 0)} m` +
+    (g ? `<br>→ <b>${g.name}</b> ${f(g.dist, 0)} m · bearing ${g.bearing}° · ${g.arrived ? "✅ arrived" : g.rel == null ? "" : `turn ${Math.abs(g.rel)}° ${g.rel < 0 ? "left" : "right"}`}` : "");
+}
+
+dial(null);
+connect();
+</script>
+</body>
+</html>

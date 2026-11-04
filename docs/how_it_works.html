@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>How Rover Phone ML Works</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  :root { --ink:#1b2230; --mut:#5b6678; --acc:#2f6fdc; --grn:#1f9d5a; --red:#d2453b; --amb:#d08a12; --line:#d9dee7; --soft:#f3f6fb; }
+  body { font: 10.4pt/1.5 -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--ink); margin: 0; }
+  h1 { font-size: 24pt; margin: 0 0 4px; letter-spacing: -.3px; }
+  h2 { font-size: 14.5pt; margin: 22px 0 6px; padding-bottom: 3px; border-bottom: 2px solid var(--acc); break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14px 0 4px; break-after: avoid; }
+  p { margin: 5px 0 7px; }
+  .sub { color: var(--mut); font-size: 11.5pt; margin-bottom: 14px; }
+  .cover { border-left: 5px solid var(--acc); padding: 4px 0 4px 14px; margin-bottom: 16px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 9.6pt; break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: var(--soft); }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .eq { background: var(--soft); border-radius: 6px; padding: 7px 12px; margin: 6px 0 9px; font-family: "Menlo", monospace; font-size: 9.6pt; break-inside: avoid; }
+  .note { border: 1px solid var(--line); border-left: 4px solid var(--amb); border-radius: 4px; padding: 6px 10px; margin: 8px 0; font-size: 9.8pt; break-inside: avoid; }
+  figure { margin: 8px 0 12px; break-inside: avoid; text-align: center; }
+  figcaption { color: var(--mut); font-size: 9pt; margin-top: 3px; }
+  svg text { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  ol, ul { margin: 4px 0 8px; padding-left: 20px; } li { margin: 2px 0; }
+  code { font-family: Menlo, monospace; font-size: 9pt; background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  .pb { break-before: page; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+</style></head><body>
+
+<div class="cover">
+  <h1>How Rover Phone ML Works</h1>
+  <div class="sub">A self-driving rover brain that runs entirely on an Android phone — the models, the maths and the measurements.<br>
+  PH3042 Robotics &amp; Automation · version 1.0 · November 2026</div>
+</div>
+
+<h2>1. The idea in one page</h2>
+<p>The phone is mounted on the rover and looks forward with <b>one camera at the smallest resolution (240×320)</b>.
+Every frame (about 11 per second) three vision methods run side by side, their results are turned into
+<b>positions on the floor in metres</b> using the phone's tilt sensor, and a planner picks the direction with the longest
+clear corridor that is wide enough for the rover. GPS adds a goal direction on an OpenStreetMap map.
+Nothing leaves the phone: the models, maps already seen and recordings are all stored on it.</p>
+
+<figure>
+<svg viewBox="0 0 720 300" width="100%">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b6678"/></marker></defs>
+  <g font-size="11.5">
+  <rect x="8" y="110" width="104" height="54" rx="8" fill="#eaf1fd" stroke="#2f6fdc"/><text x="60" y="133" text-anchor="middle" font-weight="600">Camera</text><text x="60" y="150" text-anchor="middle" fill="#5b6678">240×320, ~11 fps</text>
+  <rect x="160" y="18" width="190" height="54" rx="8" fill="#fff" stroke="#2f6fdc"/><text x="255" y="40" text-anchor="middle" font-weight="600">YOLO11n (WebGPU)</text><text x="255" y="57" text-anchor="middle" fill="#5b6678">object boxes · ~75 ms</text>
+  <rect x="160" y="110" width="190" height="54" rx="8" fill="#fff" stroke="#2f6fdc"/><text x="255" y="132" text-anchor="middle" font-weight="600">OpenCV free ground</text><text x="255" y="149" text-anchor="middle" fill="#5b6678">edges + flood fill · ~12 ms</text>
+  <rect x="160" y="202" width="190" height="54" rx="8" fill="#fff" stroke="#2f6fdc"/><text x="255" y="224" text-anchor="middle" font-weight="600">OpenCV optical flow</text><text x="255" y="241" text-anchor="middle" fill="#5b6678">motion, time to contact · ~3 ms</text>
+  <rect x="160" y="270" width="190" height="26" rx="6" fill="#f3f6fb" stroke="#d9dee7"/><text x="255" y="287" text-anchor="middle" fill="#5b6678">tilt · compass · GPS sensors</text>
+  <rect x="398" y="80" width="140" height="110" rx="8" fill="#fff" stroke="#1f9d5a"/><text x="468" y="106" text-anchor="middle" font-weight="600">Floor geometry</text><text x="468" y="124" text-anchor="middle" fill="#5b6678">pixels → metres</text><text x="468" y="142" text-anchor="middle" fill="#5b6678">obstacle list</text><text x="468" y="160" text-anchor="middle" fill="#5b6678">tracking</text>
+  <rect x="582" y="80" width="130" height="110" rx="8" fill="#e8f6ee" stroke="#1f9d5a"/><text x="647" y="106" text-anchor="middle" font-weight="600">Planner</text><text x="647" y="126" text-anchor="middle" fill="#5b6678">FORWARD / LEFT /</text><text x="647" y="142" text-anchor="middle" fill="#5b6678">RIGHT / STOP</text><text x="647" y="162" text-anchor="middle" fill="#5b6678">steer, throttle</text>
+  <g stroke="#5b6678" stroke-width="1.4" fill="none" marker-end="url(#ar)">
+    <path d="M112,128 C135,128 135,45 158,45"/><path d="M112,137 L158,137"/><path d="M112,146 C135,146 135,229 158,229"/>
+    <path d="M350,45 C375,45 375,110 396,110"/><path d="M350,137 L396,137"/><path d="M350,229 C380,229 600,229 640,192"/>
+    <path d="M350,283 C380,283 380,170 396,170"/><path d="M538,135 L580,135"/>
+  </g></g>
+</svg>
+<figcaption>Figure 1 — Every frame: three vision methods → floor geometry → planner. The time-to-contact check can force STOP directly.</figcaption>
+</figure>
+
+<table>
+<tr><th>Part</th><th>What it answers</th><th>Method</th><th class="n">Time / frame (this phone)</th></tr>
+<tr><td>YOLO11n</td><td>Where are objects (people, chairs, bikes, cars…)?</td><td>Deep CNN, 80 COCO classes, names hidden</td><td class="n">70–120 ms</td></tr>
+<tr><td>OpenCV free ground</td><td>Which part of the picture is drivable floor?</td><td>Colour edges + flood fill</td><td class="n">10–14 ms</td></tr>
+<tr><td>OpenCV optical flow</td><td>Am I moving/turning? Is something rushing at me?</td><td>Lucas–Kanade tracking</td><td class="n">2–4 ms</td></tr>
+<tr><td>Floor geometry</td><td>How far, how wide, which angle?</td><td>Camera tilt + pin-hole model</td><td class="n">&lt; 1 ms</td></tr>
+<tr><td>Planner</td><td>Which way should the rover drive?</td><td>Corridor search, −35° … +35°</td><td class="n">&lt; 1 ms</td></tr>
+</table>
+
+<h2>2. Input: one small camera and the phone's sensors</h2>
+<p>The app opens only the <b>ultra-wide back lens</b> (95.7° across the long side on this phone) at <b>240×320</b>. A small picture is
+enough for obstacles within ~8 m, it keeps every algorithm fast, and the wide view sees obstacles beside the rover.
+Video is never saved.</p>
+<ul>
+<li><b>Accelerometer → camera tilt (pitch).</b> Needed to convert a pixel row into a distance on the floor (§5).</li>
+<li><b>Compass + gyroscope → heading</b>, used for the map arrow and the turn towards a GPS goal.</li>
+<li><b>GPS → position</b>, smoothed with a Kalman filter (§8).</li>
+</ul>
+
+<h2>3. YOLO11n — the object detector</h2>
+<p>YOLO ("You Only Look Once") finds every object in a single pass of a convolutional neural network. We use
+<b>YOLO11n</b> (Ultralytics, 2024), the smallest version: <b>2.6 million parameters</b>, trained on the COCO dataset
+(80 everyday classes). It was exported from PyTorch to ONNX at a 320×320 input (<code>tools/export_models.py</code>, 10.6 MB) and runs
+on the phone's GPU through <b>onnxruntime-web with WebGPU</b>.</p>
+
+<figure>
+<svg viewBox="0 0 720 170" width="100%">
+  <g font-size="11">
+  <rect x="5" y="55" width="78" height="60" rx="6" fill="#f3f6fb" stroke="#5b6678"/><text x="44" y="80" text-anchor="middle" font-weight="600">Input</text><text x="44" y="97" text-anchor="middle" fill="#5b6678">3×320×320</text>
+  <rect x="105" y="20" width="170" height="130" rx="8" fill="#eaf1fd" stroke="#2f6fdc"/><text x="190" y="40" text-anchor="middle" font-weight="600">Backbone</text>
+  <text x="190" y="60" text-anchor="middle" fill="#5b6678">Conv (stride 2) ×5</text><text x="190" y="78" text-anchor="middle" fill="#5b6678">C3k2 blocks (CSP)</text><text x="190" y="96" text-anchor="middle" fill="#5b6678">SPPF (multi-scale pool)</text><text x="190" y="114" text-anchor="middle" fill="#5b6678">C2PSA (attention)</text><text x="190" y="138" text-anchor="middle" fill="#2f6fdc">features at 1/8, 1/16, 1/32</text>
+  <rect x="297" y="20" width="150" height="130" rx="8" fill="#eaf1fd" stroke="#2f6fdc"/><text x="372" y="40" text-anchor="middle" font-weight="600">Neck (FPN + PAN)</text>
+  <text x="372" y="64" text-anchor="middle" fill="#5b6678">upsample + concat</text><text x="372" y="82" text-anchor="middle" fill="#5b6678">downsample + concat</text><text x="372" y="106" text-anchor="middle" fill="#5b6678">mixes small detail with</text><text x="372" y="122" text-anchor="middle" fill="#5b6678">large context</text>
+  <rect x="469" y="20" width="120" height="130" rx="8" fill="#eaf1fd" stroke="#2f6fdc"/><text x="529" y="40" text-anchor="middle" font-weight="600">Detect head</text>
+  <text x="529" y="62" text-anchor="middle" fill="#5b6678">anchor-free</text><text x="529" y="80" text-anchor="middle" fill="#5b6678">box branch (DFL)</text><text x="529" y="98" text-anchor="middle" fill="#5b6678">class branch</text><text x="529" y="124" text-anchor="middle" fill="#5b6678">40², 20², 10² grids</text>
+  <rect x="611" y="55" width="104" height="60" rx="6" fill="#e8f6ee" stroke="#1f9d5a"/><text x="663" y="80" text-anchor="middle" font-weight="600">Output</text><text x="663" y="97" text-anchor="middle" fill="#5b6678">84 × 2100</text>
+  <g stroke="#5b6678" stroke-width="1.4" marker-end="url(#ar)"><path d="M83,85 L103,85"/><path d="M275,85 L295,85"/><path d="M447,85 L467,85"/><path d="M589,85 L609,85"/></g>
+  </g>
+</svg>
+<figcaption>Figure 2 — YOLO11n structure. 40×40 + 20×20 + 10×10 = 2100 candidate positions; each gives 4 box numbers + 80 class scores = 84.</figcaption>
+</figure>
+
+<h3>Steps per frame (<code>static/js/yolo.js</code>)</h3>
+<ol>
+<li><b>Letterbox:</b> scale the 240×320 frame into 320×320 keeping its shape, pad with grey, divide pixels by 255, reorder to channels-first (CHW).</li>
+<li><b>Run the network</b> on WebGPU → tensor [1, 84, 2100].</li>
+<li><b>Decode:</b> for each of the 2100 positions take the best class score; keep it if ≥ 0.3. The first four numbers are the box centre and size (cx, cy, w, h) in 320-pixel units; undo the letterbox to get camera pixels.</li>
+<li><b>Non-maximum suppression (class-agnostic):</b> sort by score, drop any box overlapping a better one by IoU &gt; 0.45. "Class-agnostic" because a chair and a "couch" on the same object are still one obstacle.</li>
+</ol>
+<div class="eq">IoU(A, B) = area(A ∩ B) / area(A ∪ B)</div>
+
+<h3>From detections to obstacles (<code>static/js/obstacles.js</code>)</h3>
+<ul>
+<li><b>Tracking:</b> each new box is matched to last frame's boxes by IoU ≥ 0.25 and smoothed; a box must be seen in several frames before it counts, which removes one-frame flickers.</li>
+<li><b>Names are hidden.</b> The class is only used as a back-up for distance (typical height, below). On screen every object is just "obstacle".</li>
+<li><b>Distance:</b> if the bottom of the box is visible, it is where the object stands on the floor, so the floor geometry (§5) gives the distance. If the bottom is cut off, the typical height is used: <code>d = H · f / box_height</code> (e.g. a person H = 1.7 m).</li>
+</ul>
+
+<h3>Why YOLO11n — benchmark on this phone</h3>
+<table>
+<tr><th>Model</th><th>Engine</th><th class="n">Median time</th><th>Verdict</th></tr>
+<tr><td><b>YOLO11n 320</b></td><td>WebGPU</td><td class="n"><b>71–120 ms</b></td><td>Chosen — fastest, finds far more objects</td></tr>
+<tr><td>YOLO11n 320</td><td>WASM (CPU)</td><td class="n">462 ms</td><td>Too slow</td></tr>
+<tr><td>COCO-SSD (SSDLite MobileNetV2)</td><td>WebGL</td><td class="n">130 ms</td><td>Kept as automatic fall-back</td></tr>
+<tr><td>Depth Anything V2 Small 4-bit</td><td>WebGPU</td><td class="n">—</td><td>Invalid (blank) output on this GPU</td></tr>
+<tr><td>Depth Anything V2 Small fp16</td><td>WebGPU</td><td class="n">—</td><td>Crashed the browser</td></tr>
+<tr><td>Depth Anything V2 Small</td><td>CPU</td><td class="n">≈ 4 200 ms</td><td>Far too slow — dropped</td></tr>
+</table>
+<p>If WebGPU cannot start (old WebView, or the GPU still busy after a restart — the app retries three times first),
+the app switches itself to COCO-SSD so the rover never runs blind.</p>
+
+<h2 class="pb">4. OpenCV — finding the free ground</h2>
+<p>A detector only knows the 80 classes it was trained on; it does not see a wall, a kerb, a step or a box.
+So the app also finds the <b>drivable floor</b> directly with classic computer vision (OpenCV.js 4.9, compiled to WebAssembly),
+on a 120×160 copy of the frame (<code>static/js/cvision.js</code>):</p>
+<ol>
+<li><b>Blur</b> (Gaussian 5×5) to remove sensor noise.</li>
+<li><b>Convert to YCrCb.</b> Y is brightness; Cr and Cb are colour. A shadow mostly changes Y, while a real boundary (floor → wall) usually changes colour too.</li>
+<li><b>Canny edges</b> — strict on brightness (thresholds 80/200) but sensitive on colour (12/36), then OR-ed together and dilated 3×3 so the fill cannot leak through small gaps.</li>
+<li><b>Flood fill</b> from 10 seed points just in front of the rover, on the weighted image (0.35·Y, 1.5·Cr, 1.5·Cb), tolerance (4, 5, 5). Edges act as walls. Brightness counts only a third as much as colour, so the fill crosses shadows but stops at a wall of similar brightness.</li>
+<li><b>Clean up</b> with morphological close then open (5×5 ellipse) to fill holes from texture and cut thin leaks.</li>
+<li><b>Boundary:</b> for each image column, the highest free pixel connected to the bottom is the edge of the free ground. Nothing above the horizon (from the tilt sensor) can be floor.</li>
+<li><b>Obstacle blobs:</b> holes inside the free ground (contour hierarchy <code>RETR_CCOMP</code>) are objects with floor all around them, e.g. a bag in the middle of a corridor.</li>
+</ol>
+<p>Groups of at least 3 neighbouring columns whose boundary is close become <b>edge obstacles</b>, each with a distance, angle and width.
+Two alternative path detectors are in the settings: a simple colour model, and DeepLab v3 (ADE20K) semantic segmentation (~1.3 s, run once a second).</p>
+
+<h2>5. Pixels to metres — the floor geometry</h2>
+<div class="two">
+<div>
+<p>The phone knows its height above the floor <i>h</i> (set or calibrated) and its downward tilt <i>θ</i> (accelerometer).
+A pixel in row <i>v</i> looks at an angle <code>atan((v − c<sub>y</sub>)/f)</code> below the optical axis, where
+<i>f</i> is the focal length in pixels (from the lens field of view) and <i>c<sub>y</sub></i> the image centre. If that pixel is on the floor:</p>
+<div class="eq">α = θ + atan((v − c<sub>y</sub>) / f)<br>Z = h / tan(α)  (metres ahead)<br>X = Z · (u − c<sub>x</sub>) / f  (metres right)</div>
+<p>Rows within 1.5° of the horizon (distance explodes) or past 88° (behind the feet) are ignored, and distances are capped at 20 m.</p>
+</div>
+<figure style="margin:0">
+<svg viewBox="0 0 330 200" width="100%">
+  <g font-size="11">
+  <line x1="10" y1="170" x2="325" y2="170" stroke="#1b2230" stroke-width="2"/>
+  <rect x="28" y="62" width="14" height="26" rx="3" fill="#2f6fdc"/><text x="12" y="56" fill="#2f6fdc">phone</text>
+  <line x1="35" y1="88" x2="35" y2="170" stroke="#5b6678" stroke-dasharray="4 3"/><text x="40" y="132" fill="#5b6678">h</text>
+  <line x1="42" y1="75" x2="320" y2="75" stroke="#9aa3b2" stroke-dasharray="5 4"/><text x="250" y="68" fill="#5b6678">horizon</text>
+  <line x1="42" y1="75" x2="300" y2="130" stroke="#5b6678"/><text x="240" y="122" fill="#5b6678">optical axis</text>
+  <line x1="42" y1="75" x2="230" y2="170" stroke="#d2453b" stroke-width="2"/><circle cx="230" cy="170" r="4" fill="#d2453b"/>
+  <text x="200" y="188" fill="#d2453b">floor point at Z</text>
+  <path d="M100,75 A58,58 0 0,1 94,101" fill="none" stroke="#1f9d5a" stroke-width="1.6"/><text x="104" y="96" fill="#1f9d5a">α</text>
+  <line x1="35" y1="182" x2="230" y2="182" stroke="#5b6678" marker-end="url(#ar)"/><text x="120" y="196" fill="#5b6678">Z</text>
+  </g>
+</svg>
+<figcaption>Figure 3 — Distance from the angle below the horizon.</figcaption>
+</figure>
+</div>
+<p><b>Calibration</b> (one tap): put an object on the floor at a measured distance, tap where it touches the floor; the app solves for a pitch
+offset so that row gives exactly that distance. This corrects sensor bias and mounting angle (typical error before: 10–30 %).</p>
+
+<h2>6. Optical flow — motion and "something is coming at me"</h2>
+<p>Up to 80 strong corners (Shi–Tomasi <code>goodFeaturesToTrack</code>, quality 0.01, spacing 5 px) are tracked from the previous frame
+with pyramidal <b>Lucas–Kanade</b>. From the tracked points:</p>
+<ul>
+<li><b>Median horizontal shift</b> → the camera is turning left or right; median overall size of shifts → moving or still.</li>
+<li><b>Looming / time to contact (TTC).</b> After removing the common shift, points in the middle third that move away from the
+centre mean an object ahead is getting bigger. For a point at distance <i>r</i> from the centre that moves outwards at <i>dr/dt</i>,
+the time until contact is τ = r / (dr/dt); the median over the points is used, and only when at least half of the centre points agree.</li>
+</ul>
+<div class="eq">TTC = median( r / (dr/dt) )   — shown when &lt; 3 s; if TTC &lt; 1 s the planner is overridden with STOP</div>
+<p>This works for <b>any</b> object, even ones that are neither a COCO class nor visible as a ground edge, such as a door swinging towards the rover.</p>
+
+<h2 class="pb">7. The planner — choosing a direction</h2>
+<p>All obstacles — ground-edge points from OpenCV and the floor footprints of YOLO boxes — are now points (X, Z) on the floor.
+The planner (<code>static/js/planner.js</code>) tries headings from −35° to +35° in 5° steps. For each heading <i>a</i> it slides a corridor
+as wide as the rover (half-width 0.20 m + 0.15 m margin) forward and finds the <b>clear distance</b> to the first point inside it:</p>
+<div class="eq">along = X·sin a + Z·cos a,   lateral = |X·cos a − Z·sin a|<br>
+clear(a) = min(along) over points with along &gt; 0 and lateral &lt; 0.35 m   (max 8 m)</div>
+<p>Each heading gets a score that prefers long corridors, the GPS goal direction <i>g</i>, and no sudden swings from the last choice:</p>
+<div class="eq">score(a) = min(clear, 5)/5 − 0.35·|a − g|/70° − 0.15·|a − a<sub>last</sub>|/70°</div>
+<table>
+<tr><th>Result</th><th>Rule</th></tr>
+<tr><td><b>NO PATH</b></td><td>less than 3 % of the view is free ground</td></tr>
+<tr><td><b>STOP</b></td><td>best clear distance &lt; 0.6 m, or time to contact &lt; 1 s</td></tr>
+<tr><td><b>FORWARD / LEFT / RIGHT</b></td><td>smoothed heading within ±7° → FORWARD, else turn that way</td></tr>
+<tr><td>steer</td><td>heading ÷ max heading, −1 (full left) … +1 (full right)</td></tr>
+<tr><td>throttle</td><td>0.2 + 0.12 × clear distance, capped at 0.7 — slower when space is short</td></tr>
+</table>
+
+<h2>8. GPS navigation on OpenStreetMap</h2>
+<ul>
+<li>Each GPS fix is converted to local metres (east, north) and smoothed by a <b>constant-velocity Kalman filter</b> per axis
+(state = position and velocity; the GPS accuracy is the measurement noise). This removes jumps and gives speed.</li>
+<li>For the chosen waypoint, the great-circle <b>bearing</b> and <b>haversine distance</b> are computed; bearing minus the compass heading
+is the goal direction <i>g</i> used by the planner. The rover therefore heads towards the goal but only along free floor.</li>
+<li>The map is Leaflet with OpenStreetMap tiles. Tiles you have looked at are cached (up to 4 000) so the map works offline later.</li>
+</ul>
+
+<h2>9. Recording</h2>
+<p>Two samples per second are saved in the phone's IndexedDB database: position, speed, heading, tilt, the planner command, clear
+distances, nearest obstacle, free-ground fraction, time to contact, path source and fps. Sessions export as CSV or JSON to
+<code>Downloads/RoverPhoneML/</code> (tested: 12 samples in 6 s exported correctly).</p>
+
+<h2>10. The Android app and Drive mode</h2>
+<p>The APK (<code>android/</code>) is a small Java shell around a full-screen WebView. It serves the bundled web app from the secure origin
+<code>https://appassets.androidplatform.net</code> (camera and GPS need a secure origin), grants the camera and location permissions,
+and saves exports. Because Android does not let one app stop others, <b>Drive mode</b> gives the models the phone in the safest possible way:</p>
+<table>
+<tr><th>Feature</th><th>Why</th></tr>
+<tr><td>App pinning (lock task)</td><td>No other app or pop-up can take the screen — the camera and GPU stop when the app is not in front</td></tr>
+<tr><td>Do Not Disturb (alarms only)</td><td>Calls and notifications are held; your own setting is saved and put back, even after a crash</td></tr>
+<tr><td>Sustained performance mode</td><td>Steady CPU/GPU clocks instead of bursts and thermal throttling (where the phone supports it)</td></tr>
+<tr><td>Screen on, full screen</td><td>The phone never locks mid-drive</td></tr>
+</table>
+<p>Measured in the APK on the test phone: <b>YOLO11n on WebGPU, 11 fps (75–93 ms), OpenCV path 10–12 ms, 80 flow points</b>,
+Drive mode "do-not-disturb pinned".</p>
+
+<h2>11. Limits and next steps</h2>
+<ul>
+<li>Distances assume a <b>flat floor</b>; slopes and steps give errors. Hanging obstacles (table tops) are seen by YOLO, not by the ground method.</li>
+<li>Very uniform floors with no texture give few flow points; strong reflections can fool the flood fill.</li>
+<li>YOLO knows only the 80 COCO classes. It can be retrained on campus images: <code>yolo detect train model=yolo11n.pt data=campus.yaml imgsz=320</code>, then re-export.</li>
+<li>GPS is ±3–10 m: good for choosing a direction across a campus, not for passing through a doorway.</li>
+<li>Next: send <code>{action, steer, throttle}</code> to an ESP32 motor controller over USB-OTG serial or Wi-Fi, with a watchdog that stops the motors if commands stop for 0.5 s.</li>
+</ul>
+
+<h3>Credits and licences</h3>
+<p style="font-size:9.4pt">YOLO11n © Ultralytics (AGPL-3.0) · onnxruntime-web (MIT) · OpenCV.js (Apache-2.0) · TensorFlow.js, COCO-SSD, DeepLab (Apache-2.0) ·
+Leaflet (BSD-2) · Map data © OpenStreetMap contributors (ODbL).</p>
+</body></html>
