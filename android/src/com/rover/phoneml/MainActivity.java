@@ -51,6 +51,8 @@ public class MainActivity extends Activity {
     private PermissionRequest pendingCamera;
     private int savedFilter = -1;          // Do Not Disturb setting before Drive mode
     private boolean driving = false;
+    static final String NPU_MODEL = "www/vendor/models/yolo11n/yolo11n.tflite";
+    private NpuYolo npu;                   // YOLO11n on the NPU, made on first use
     private static final Map<String, String> MIME = new HashMap<>();
     static {
         MIME.put("html", "text/html"); MIME.put("js", "text/javascript"); MIME.put("mjs", "text/javascript");
@@ -198,6 +200,46 @@ public class MainActivity extends Activity {
             });
             synchronized (lock) { try { if (out.length() == 0) lock.wait(2000); } catch (InterruptedException ignored) {} }
             return out.toString();
+        }
+
+        // ---- YOLO11n on the NPU (NpuYolo.java); all calls arrive on the one JavaBridge thread ----
+        @JavascriptInterface
+        public String npuInit(String accel) {
+            try {
+                if (npu != null && npu.accel.equals(accel)) return "ok " + npu.initMs;
+                if (npu != null) { npu.close(); npu = null; }
+                npu = new NpuYolo(getAssets(), NPU_MODEL, accel);
+                return "ok " + npu.initMs;
+            } catch (Throwable e) {
+                Log.w(TAG, "npuInit " + accel, e);
+                return "ERROR " + e;
+            }
+        }
+        @JavascriptInterface
+        public String npuDetect(String jpeg, float minScore, int maxBoxes) {
+            if (npu == null) return "{\"error\":\"not started\"}";
+            try { return npu.detect(jpeg, minScore, maxBoxes); }
+            catch (Throwable e) { return "{\"error\":\"" + e.toString().replace("\"", "'") + "\"}"; }
+        }
+        /** Time every accelerator (n runs each) and return a JSON list. */
+        @JavascriptInterface
+        public String npuBench(int n) {
+            StringBuilder sb = new StringBuilder("[");
+            String current = npu == null ? null : npu.accel;
+            if (npu != null) { npu.close(); npu = null; }
+            for (String a : NpuYolo.ACCEL) {
+                if (sb.length() > 1) sb.append(',');
+                try {
+                    NpuYolo y = new NpuYolo(getAssets(), NPU_MODEL, a);
+                    double ms = y.bench(n);
+                    sb.append(String.format("{\"accel\":\"%s\",\"initMs\":%d,\"ms\":%.1f}", a, y.initMs, ms));
+                    y.close();
+                } catch (Throwable e) {
+                    sb.append(String.format("{\"accel\":\"%s\",\"error\":\"%s\"}", a, e.toString().replace("\"", "'")));
+                }
+            }
+            if (current != null) npuInit(current);
+            return sb.append("]").toString();
         }
     }
 

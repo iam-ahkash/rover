@@ -64,3 +64,26 @@ async function loadYolo() {
   }
   return { detect, name: "YOLO11n", engine: "webgpu" };
 }
+
+// YOLO11n on the phone's NPU (Android app only, android/src/.../NpuYolo.java). The frame goes to
+// the native side as a small JPEG; TensorFlow Lite runs the network on the MediaTek APU through
+// Android's Neural Networks API and sends back the boxes. Same detect() result as above.
+// accel: "npu" (MDLA), "neuron", "dsp", "nnapi-gpu" or "cpu".
+async function loadYoloNpu(accel = "npu") {
+  if (!window.AndroidBridge?.npuInit) throw new Error("NPU needs the Android app");
+  const r = AndroidBridge.npuInit(accel);
+  if (!r.startsWith("ok")) throw new Error(r.replace(/^ERROR /, ""));
+  const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d");
+  const det = { name: "YOLO11n", engine: accel === "cpu" ? "cpu (tflite)" : accel === "npu" ? "NPU" : accel,
+                initMs: +r.split(" ")[1], npuMs: 0, preMs: 0 };
+  det.detect = async (src, maxBoxes = 15, minScore = 0.3) => {
+    const vw = src.videoWidth || src.width, vh = src.videoHeight || src.height;
+    if (canvas.width !== vw || canvas.height !== vh) { canvas.width = vw; canvas.height = vh; }
+    ctx.drawImage(src, 0, 0, vw, vh);
+    const res = JSON.parse(AndroidBridge.npuDetect(canvas.toDataURL("image/jpeg", 0.85), minScore, maxBoxes));
+    if (res.error) throw new Error(res.error);
+    det.npuMs = res.ms; det.preMs = res.pre;
+    return res.boxes.map(([x, y, w, h, score, c]) => ({ bbox: [x, y, w, h], score, class: COCO_NAMES[c] }));
+  };
+  return det;
+}

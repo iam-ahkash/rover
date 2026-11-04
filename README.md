@@ -6,6 +6,7 @@ direction, plans a direction (FORWARD / LEFT / RIGHT / STOP / NO PATH), and foll
 It **records everything on the phone**. The Mac is only needed once, to load the app.
 
 - **Android app:** [`android/out/RoverPhoneML.apk`](android/out/RoverPhoneML.apk) — install and use it with [`docs/ANDROID_APP.md`](docs/ANDROID_APP.md)
+- **NPU:** in the app, YOLO11n runs on the phone's MediaTek APU through NNAPI (18 ms vs 75 ms on WebGPU), see `android/src/com/rover/phoneml/NpuYolo.java`
 - **How the models work (PDF):** [`docs/How_Rover_Phone_ML_Works.pdf`](docs/How_Rover_Phone_ML_Works.pdf)
 
 ```

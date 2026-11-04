@@ -180,10 +180,15 @@
   <h2>⚙️ Settings</h2>
   <label>Obstacle model
     <select id="set-model">
-      <option value="yolo11n">YOLO11n — best (GPU)</option>
+      <option value="yolo11n-npu">YOLO11n — NPU (MediaTek APU, app only)</option>
+      <option value="yolo11n">YOLO11n — GPU (WebGPU)</option>
       <option value="lite_mobilenet_v2">Fast (SSDLite MobileNetV2)</option>
       <option value="mobilenet_v2">Accurate (SSD MobileNetV2)</option>
     </select></label>
+  <div id="npu-row" style="display:none">
+    <button id="npu-bench" style="width:100%;background:#2a303a;margin:4px 0">⚡ Test accelerators (NPU / GPU / CPU, ~1 min)</button>
+    <div class="v" id="npu-msg" style="font-family:inherit;font-size:13px"></div>
+  </div>
   <label>Path detector
     <select id="set-path">
       <option value="opencv">OpenCV (edges + flood fill)</option>

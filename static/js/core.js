@@ -13,6 +13,7 @@ const DEFAULTS = {
   // sensor calibration (js/calib.js)
   accBias: [0, 0], gyroBias: [0, 0, 0], accCal: false, fovCal: false,
   compassOffset: 0, compassCal: null, gpsMaxAcc: 50,
+  npuAccel: "npu",                 // which NNAPI accelerator runs YOLO in the app (js/yolo.js)
   edgeMargin: 0.15, edgeSens: 5,    // path edges: keep-away distance (m), edge sensitivity 1-10
 };
 const settings = (() => {
@@ -23,6 +24,9 @@ const settings = (() => {
 })();
 // one-time switch to YOLO11n (benchmarked best on this phone, Nov 2026); can be changed back in Settings
 if (!settings.yoloSwitch) { settings.model = "yolo11n"; settings.yoloSwitch = true; }
+// one-time switch to the NPU in the Android app (YOLO11n 18 ms on the MediaTek APU vs 75 ms WebGPU, Nov 2026)
+if (IS_APK && !settings.npuSwitch) { settings.model = "yolo11n-npu"; settings.npuSwitch = true; }
+if (!IS_APK && settings.model === "yolo11n-npu") settings.model = "yolo11n";   // NPU needs the app
 function saveSettings() { try { localStorage.setItem("rover-settings", JSON.stringify(settings)); } catch {} }
 
 // ?path=ai or ?path=colour in the address picks the path detector (handy for demos)

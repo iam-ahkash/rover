@@ -34,7 +34,7 @@
 
 <h2>1. The idea in one page</h2>
 <p>The phone is mounted on the rover and looks forward with <b>one camera at the smallest resolution (240×320)</b>.
-Every frame (about 11 per second) three vision methods run side by side, their results are turned into
+Every frame (17–27 per second) three vision methods run side by side, their results are turned into
 <b>positions on the floor in metres</b> using the phone's tilt sensor, and a planner picks the direction with the longest
 clear corridor that is wide enough for the rover. GPS adds a goal direction on an OpenStreetMap map.
 Nothing leaves the phone: the models, maps already seen and recordings are all stored on it.</p>
@@ -43,8 +43,8 @@ Nothing leaves the phone: the models, maps already seen and recordings are all s
 <svg viewBox="0 0 720 300" width="100%">
   <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b6678"/></marker></defs>
   <g font-size="11.5">
-  <rect x="8" y="110" width="104" height="54" rx="8" fill="#eaf1fd" stroke="#2f6fdc"/><text x="60" y="133" text-anchor="middle" font-weight="600">Camera</text><text x="60" y="150" text-anchor="middle" fill="#5b6678">240×320, ~11 fps</text>
-  <rect x="160" y="18" width="190" height="54" rx="8" fill="#fff" stroke="#2f6fdc"/><text x="255" y="40" text-anchor="middle" font-weight="600">YOLO11n (WebGPU)</text><text x="255" y="57" text-anchor="middle" fill="#5b6678">object boxes · ~75 ms</text>
+  <rect x="8" y="110" width="104" height="54" rx="8" fill="#eaf1fd" stroke="#2f6fdc"/><text x="60" y="133" text-anchor="middle" font-weight="600">Camera</text><text x="60" y="150" text-anchor="middle" fill="#5b6678">240×320, ~20 fps</text>
+  <rect x="160" y="18" width="190" height="54" rx="8" fill="#fff" stroke="#2f6fdc"/><text x="255" y="40" text-anchor="middle" font-weight="600">YOLO11n (NPU)</text><text x="255" y="57" text-anchor="middle" fill="#5b6678">object boxes · ~18 ms</text>
   <rect x="160" y="110" width="190" height="54" rx="8" fill="#fff" stroke="#2f6fdc"/><text x="255" y="132" text-anchor="middle" font-weight="600">OpenCV free ground</text><text x="255" y="149" text-anchor="middle" fill="#5b6678">edges + flood fill · ~12 ms</text>
   <rect x="160" y="202" width="190" height="54" rx="8" fill="#fff" stroke="#2f6fdc"/><text x="255" y="224" text-anchor="middle" font-weight="600">OpenCV optical flow</text><text x="255" y="241" text-anchor="middle" fill="#5b6678">motion, time to contact · ~3 ms</text>
   <rect x="160" y="270" width="190" height="26" rx="6" fill="#f3f6fb" stroke="#d9dee7"/><text x="255" y="287" text-anchor="middle" fill="#5b6678">tilt · compass · GPS sensors</text>
@@ -61,7 +61,7 @@ Nothing leaves the phone: the models, maps already seen and recordings are all s
 
 <table>
 <tr><th>Part</th><th>What it answers</th><th>Method</th><th class="n">Time / frame (this phone)</th></tr>
-<tr><td>YOLO11n</td><td>Where are objects (people, chairs, bikes, cars…)?</td><td>Deep CNN, 80 COCO classes, names hidden</td><td class="n">70–120 ms</td></tr>
+<tr><td>YOLO11n</td><td>Where are objects (people, chairs, bikes, cars…)?</td><td>Deep CNN on the NPU, 80 COCO classes, names hidden</td><td class="n">13–23 ms</td></tr>
 <tr><td>OpenCV free ground</td><td>Which part of the picture is drivable floor?</td><td>Colour edges + flood fill</td><td class="n">10–14 ms</td></tr>
 <tr><td>OpenCV optical flow</td><td>Am I moving/turning? Is something rushing at me?</td><td>Lucas–Kanade tracking</td><td class="n">2–4 ms</td></tr>
 <tr><td>Floor geometry</td><td>How far, how wide, which angle?</td><td>Camera tilt + pin-hole model</td><td class="n">&lt; 1 ms</td></tr>
@@ -81,8 +81,8 @@ Video is never saved.</p>
 <h2>3. YOLO11n — the object detector</h2>
 <p>YOLO ("You Only Look Once") finds every object in a single pass of a convolutional neural network. We use
 <b>YOLO11n</b> (Ultralytics, 2024), the smallest version: <b>2.6 million parameters</b>, trained on the COCO dataset
-(80 everyday classes). It was exported from PyTorch to ONNX at a 320×320 input (<code>tools/export_models.py</code>, 10.6 MB) and runs
-on the phone's GPU through <b>onnxruntime-web with WebGPU</b>.</p>
+(80 everyday classes). In the Android app it runs on the phone's <b>NPU</b> (§3a), in a browser on the GPU through
+<b>onnxruntime-web with WebGPU</b>. Both use the same network at a 320×320 input.</p>
 
 <figure>
 <svg viewBox="0 0 720 170" width="100%">
@@ -120,7 +120,9 @@ on the phone's GPU through <b>onnxruntime-web with WebGPU</b>.</p>
 <h3>Why YOLO11n — benchmark on this phone</h3>
 <table>
 <tr><th>Model</th><th>Engine</th><th class="n">Median time</th><th>Verdict</th></tr>
-<tr><td><b>YOLO11n 320</b></td><td>WebGPU</td><td class="n"><b>71–120 ms</b></td><td>Chosen — fastest, finds far more objects</td></tr>
+<tr><td><b>YOLO11n 320</b></td><td><b>NPU (MDLA, NNAPI)</b></td><td class="n"><b>13–23 ms</b></td><td>Chosen for the app — 4× faster than WebGPU</td></tr>
+<tr><td>YOLO11n 320</td><td>WebGPU</td><td class="n">71–120 ms</td><td>Browser and fall-back</td></tr>
+<tr><td>YOLO11n 320</td><td>GPU via NNAPI / DSP / CPU (TFLite)</td><td class="n">193 / 264 / 330 ms</td><td>Slower</td></tr>
 <tr><td>YOLO11n 320</td><td>WASM (CPU)</td><td class="n">462 ms</td><td>Too slow</td></tr>
 <tr><td>COCO-SSD (SSDLite MobileNetV2)</td><td>WebGL</td><td class="n">130 ms</td><td>Kept as automatic fall-back</td></tr>
 <tr><td>Depth Anything V2 Small 4-bit</td><td>WebGPU</td><td class="n">—</td><td>Invalid (blank) output on this GPU</td></tr>
@@ -129,6 +131,28 @@ on the phone's GPU through <b>onnxruntime-web with WebGPU</b>.</p>
 </table>
 <p>If WebGPU cannot start (old WebView, or the GPU still busy after a restart — the app retries three times first),
 the app switches itself to COCO-SSD so the rover never runs blind.</p>
+
+<h3>3a. Running on the NPU</h3>
+<p>The Redmi K50 Pro's MediaTek Dimensity 9000 contains an <b>APU 590</b>: dedicated deep-learning accelerators (MDLA) built for the
+multiply-accumulate work of convolutions. A web page cannot reach it, so the Android app runs YOLO natively:</p>
+<ol>
+<li>The PyTorch model is converted to TensorFlow Lite (LiteRT) with Ultralytics (<code>format=tflite</code>). Its output matches the ONNX model to 10<sup>−6</sup>.</li>
+<li>Each camera frame is passed from the web app to Java as a small JPEG (about 6 ms including the letterbox).</li>
+<li>TensorFlow Lite's <b>NNAPI delegate</b> hands the network to Android's Neural Networks API, which sends it to MediaTek's driver
+(<code>mtk-mdla_shim</code>). Settings: fp16 allowed, no CPU fall-back, <i>sustained speed</i>. The first run compiles the network (1–2.5 s).</li>
+<li>Decoding and NMS run in Java (as in §3), and the boxes go back to the web app.</li>
+</ol>
+<table>
+<tr><th>Accelerator (same model, 320×320)</th><th class="n">Median per frame</th></tr>
+<tr><td><b>NPU — MDLA</b></td><td class="n"><b>17.7 ms</b></td></tr>
+<tr><td>NPU — Neuron (MediaTek chooses MDLA/VPU)</td><td class="n">18.1 ms</td></tr>
+<tr><td>WebGPU in the browser engine</td><td class="n">~75 ms</td></tr>
+<tr><td>GPU via NNAPI</td><td class="n">192.8 ms</td></tr>
+<tr><td>DSP</td><td class="n">264.0 ms</td></tr>
+<tr><td>CPU, 4 cores (XNNPACK)</td><td class="n">330.4 ms</td></tr>
+</table>
+<p>In the full app this lifts the loop from <b>11 fps to 17–27 fps</b>, steady over a minute. On a test frame the NPU found the same person as
+the PC (box within 2 px; score 0.40 vs 0.37, from fp16 rounding). Without the driver the app falls back to WebGPU, then COCO-SSD.</p>
 
 <h2 class="pb">4. OpenCV — finding the free ground</h2>
 <p>A detector only knows the 80 classes it was trained on; it does not see a wall, a kerb, a step or a box.
@@ -229,7 +253,7 @@ and saves exports. Because Android does not let one app stop others, <b>Drive mo
 <tr><td>Sustained performance mode</td><td>Steady CPU/GPU clocks instead of bursts and thermal throttling (where the phone supports it)</td></tr>
 <tr><td>Screen on, full screen</td><td>The phone never locks mid-drive</td></tr>
 </table>
-<p>Measured in the APK on the test phone: <b>YOLO11n on WebGPU, 11 fps (75–93 ms), OpenCV path 10–12 ms, 80 flow points</b>,
+<p>Measured in the APK on the test phone: <b>YOLO11n on the NPU, 17–27 fps (13–23 ms)</b>; on WebGPU 11 fps; <b>OpenCV path 7–12 ms, 80 flow points</b>,
 Drive mode "do-not-disturb pinned".</p>
 
 <h2 class="pb">11. Calibrating the sensors</h2>
@@ -263,6 +287,6 @@ Everything is saved on the phone, and recordings store the values used.</p>
 </ul>
 
 <h3>Credits and licences</h3>
-<p style="font-size:9.4pt">YOLO11n © Ultralytics (AGPL-3.0) · onnxruntime-web (MIT) · OpenCV.js (Apache-2.0) · TensorFlow.js, COCO-SSD, DeepLab (Apache-2.0) ·
+<p style="font-size:9.4pt">YOLO11n © Ultralytics (AGPL-3.0) · TensorFlow Lite (Apache-2.0) · onnxruntime-web (MIT) · OpenCV.js (Apache-2.0) · TensorFlow.js, COCO-SSD, DeepLab (Apache-2.0) ·
 Leaflet (BSD-2) · Map data © OpenStreetMap contributors (ODbL).</p>
 </body></html>

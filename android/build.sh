@@ -6,7 +6,18 @@ cd "$(dirname "$0")"
 SDK="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 BT="$SDK/build-tools/$(ls "$SDK/build-tools" | sort -V | tail -1)"
 PLATFORM="$SDK/platforms/android-35/android.jar"
-OUT=out; rm -rf "$OUT/build"; mkdir -p "$OUT/build/assets/www" "$OUT/build/classes" "$OUT/build/res"
+OUT=out; rm -rf "$OUT/build"; mkdir -p "$OUT/build/assets/www" "$OUT/build/classes" "$OUT/build/res" "$OUT/build/lib/arm64-v8a"
+
+# TensorFlow Lite runtime (runs YOLO on the NPU through NNAPI), from Maven Central:
+#   org.tensorflow:tensorflow-lite:2.16.1 and tensorflow-lite-api:2.16.1 (Apache-2.0)
+TFL=2.16.1; M=https://repo1.maven.org/maven2/org/tensorflow
+for a in tensorflow-lite tensorflow-lite-api; do
+  [ -f "libs/$a-$TFL/classes.jar" ] && continue
+  mkdir -p "libs/$a-$TFL"; curl -sSfL -o "libs/$a-$TFL.aar" "$M/$a/$TFL/$a-$TFL.aar"
+  (cd "libs/$a-$TFL" && unzip -q -o "../$a-$TFL.aar")
+done
+JARS="libs/tensorflow-lite-$TFL/classes.jar:libs/tensorflow-lite-api-$TFL/classes.jar"
+cp "libs/tensorflow-lite-$TFL/jni/arm64-v8a/libtensorflowlite_jni.so" "$OUT/build/lib/arm64-v8a/"
 
 # 1. the web app + models into assets/www (only what the app uses; no benchmark/depth/Mac-only files)
 W=../static
@@ -18,12 +29,12 @@ echo "assets: $(du -sh "$OUT/build/assets" | cut -f1)"
 "$BT/aapt2" compile --dir res -o "$OUT/build/res/res.zip"
 "$BT/aapt2" link -o "$OUT/build/unsigned.apk" -I "$PLATFORM" --manifest AndroidManifest.xml \
   -A "$OUT/build/assets" --min-sdk-version 26 --target-sdk-version 35 \
-  -0 onnx -0 wasm -0 bin "$OUT/build/res/res.zip"
+  -0 onnx -0 wasm -0 bin -0 tflite "$OUT/build/res/res.zip"
 
 # 3. Java -> dex
-javac --release 17 -classpath "$PLATFORM" -d "$OUT/build/classes" $(find src -name '*.java')
-"$BT/d8" --release --min-api 26 --lib "$PLATFORM" --output "$OUT/build" $(find "$OUT/build/classes" -name '*.class')
-(cd "$OUT/build" && zip -q -j unsigned.apk classes.dex)
+javac --release 17 -classpath "$PLATFORM:$JARS" -d "$OUT/build/classes" $(find src -name '*.java')
+"$BT/d8" --release --min-api 26 --lib "$PLATFORM" --output "$OUT/build" $(find "$OUT/build/classes" -name '*.class') ${JARS//:/ }
+(cd "$OUT/build" && zip -q -j unsigned.apk classes.dex && zip -q -r unsigned.apk lib)
 
 # 4. align + sign (a local key in android/keystore; keep it to install updates over the old app)
 "$BT/zipalign" -f -p 4 "$OUT/build/unsigned.apk" "$OUT/build/aligned.apk"

@@ -106,7 +106,7 @@ function render() {
   const d = state.decision;
   if (d.action) { $("decision").textContent = d.action + (d.action === "LEFT" || d.action === "RIGHT" ? ` ${Math.abs(d.heading).toFixed(0)}°` : "");
                   $("decision").style.color = ACTION_COLOURS[d.action]; }
-  $("perf").innerHTML = `${state.fps} fps · ${f(state.inferMs, 0)} ms · ${state.backend}<br>` +
+  $("perf").innerHTML = `${state.fps} fps · ${f(state.inferMs, 0)} ms · ${state.backend}${detector?.npuMs ? ` (net ${f(detector.npuMs, 0)})` : ""}<br>` +
     `path: ${state.path?.source === "ai" ? `AI ${f(seg.ms, 0)} ms` : state.path?.source === "opencv" ? `OpenCV ${f(cvs.ms, 0)} ms`
             : settings.pathMode === "ai" ? "AI " + seg.status : settings.pathMode === "opencv" ? "OpenCV " + cvs.status : "colour"}` +
     (cvs.flow ? `<br>flow ${cvs.flow.n} pts · ${cvs.flow.moving ? "moving" : "still"}${Math.abs(cvs.flow.turn) > 15 ? (cvs.flow.turn > 0 ? " · turning L" : " · turning R") : ""}` : "") +
@@ -271,6 +271,22 @@ function setDrive(on) {
 }
 if (IS_APK) $("s-drive").onclick = () => setDrive(!driving);
 
+// NPU: hide the option in a browser; in the app, a button times every accelerator (NpuYolo.java)
+if (!IS_APK) $("set-model").querySelector('[value="yolo11n-npu"]').remove();
+else {
+  $("npu-row").style.display = "";
+  $("npu-bench").onclick = async () => {
+    $("npu-bench").disabled = true; $("npu-msg").textContent = "Timing YOLO11n on each accelerator… (the picture pauses)";
+    await sleep(50);
+    const names = { npu: "NPU (MDLA)", neuron: "NPU (Neuron, auto)", dsp: "DSP", "nnapi-gpu": "GPU (NNAPI)", cpu: "CPU, 4 cores" };
+    const r = JSON.parse(AndroidBridge.npuBench(20));
+    $("npu-msg").innerHTML = r.map(x => `${names[x.accel] || x.accel}: <b>${x.ms != null ? x.ms + " ms" : "not available"}</b>` +
+      (x.initMs != null ? ` <span class="hint">(start ${(x.initMs / 1000).toFixed(1)} s)</span>` : "")).join("<br>") +
+      `<br><span class="hint">WebGPU in the browser engine: ~75 ms</span>`;
+    $("npu-bench").disabled = false;
+  };
+}
+
 $("start").onclick = async () => {
   $("start").disabled = true; $("start").textContent = "Starting…";
   setDrive(true);
@@ -290,9 +306,13 @@ $("start").onclick = async () => {
     const loadModel = base => cocoSsd.load({ base, modelUrl:
       `vendor/models/${base === "lite_mobilenet_v2" ? "ssdlite_mobilenet_v2" : "ssd_mobilenet_v2"}/model.json` });
     let base = settings.model, note = "";
-    if (base === "yolo11n") {       // YOLO11n on the GPU (WebGPU); COCO-SSD fast if that can't start
+    if (base === "yolo11n-npu") {   // YOLO11n on the MediaTek NPU (Android app); else the GPU
+      try { detector = await loadYoloNpu(settings.npuAccel || "npu"); }
+      catch (e) { console.warn("NPU", e); note = " (NPU unavailable: " + (e.message || e) + ", using GPU)"; base = "yolo11n"; }
+    }
+    if (base === "yolo11n" && !detector) {   // YOLO11n on the GPU (WebGPU); COCO-SSD fast if that can't start
       try { detector = await loadYolo(); }
-      catch (e) { console.warn("YOLO", e); note = " (YOLO unavailable: " + (e.message || e) + ")"; base = "lite_mobilenet_v2"; }
+      catch (e) { console.warn("YOLO", e); note += " (YOLO unavailable: " + (e.message || e) + ")"; base = "lite_mobilenet_v2"; }
     }
     if (!detector) {
       try { detector = await loadModel(base); }
@@ -302,8 +322,9 @@ $("start").onclick = async () => {
       }
     }
     state.model = base;
-    if (base === "yolo11n") state.backend = detector.engine || "webgpu";   // tf backend stays for DeepLab only
-    pill("s-ml", !note, { yolo11n: "ML: YOLO11n", lite_mobilenet_v2: "ML: fast", mobilenet_v2: "ML: accurate" }[base] + note);
+    if (base.startsWith("yolo11n")) state.backend = detector.engine || "webgpu";   // tf backend stays for DeepLab only
+    pill("s-ml", !note || base.startsWith("yolo11n"), { "yolo11n-npu": "ML: YOLO11n · NPU", yolo11n: "ML: YOLO11n · GPU",
+      lite_mobilenet_v2: "ML: fast", mobilenet_v2: "ML: accurate" }[base] + note);
     $("hint").textContent = "Running on the phone. Set the camera height, calibrate once, then record.";
     $("start").style.display = "none";
     loop();
