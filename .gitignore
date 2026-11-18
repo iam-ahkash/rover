@@ -17,3 +17,7 @@ logs/
 tools/tflite/
 tools/bench_bin/
 android/libs/
+
+# delivery rover: intermediate files rebuilt by the scripts
+delivery_rover/build/
+*.FCBak

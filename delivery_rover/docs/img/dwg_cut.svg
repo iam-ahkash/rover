@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="286.272438pt" height="306.525187pt" viewBox="0 0 286.272438 306.525187" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-18T13:44:50.746544</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.6, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 306.525187 
+L 286.272438 306.525187 
+L 286.272438 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 7.3152 299.209987 
+L 277.8624 299.209987 
+L 277.8624 28.662787 
+L 7.3152 28.662787 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #f6ead6; stroke: #2b2b2b; stroke-width: 0.8; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 7.3152 299.209987 
+L 229.0752 299.209987 
+L 229.0752 121.801987 
+L 7.3152 121.801987 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #d8b483; stroke: #2b2b2b; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 7.3152 120.471427 
+L 229.0752 120.471427 
+L 229.0752 100.513027 
+L 7.3152 100.513027 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #c9a26d; stroke: #2b2b2b; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 7.3152 99.182467 
+L 229.0752 99.182467 
+L 229.0752 79.224067 
+L 7.3152 79.224067 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #c9a26d; stroke: #2b2b2b; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 7.3152 77.893507 
+L 174.07872 77.893507 
+L 174.07872 57.935107 
+L 7.3152 57.935107 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #c9a26d; stroke: #2b2b2b; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 7.3152 56.604547 
+L 174.07872 56.604547 
+L 174.07872 36.646147 
+L 7.3152 36.646147 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #c9a26d; stroke: #2b2b2b; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 230.40576 299.209987 
+L 252.58176 299.209987 
+L 252.58176 121.801987 
+L 230.40576 121.801987 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #d8b483; stroke: #2b2b2b; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 253.91232 299.209987 
+L 277.8624 299.209987 
+L 277.8624 272.598787 
+L 253.91232 272.598787 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #e3c79a; stroke: #2b2b2b; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 253.91232 271.268227 
+L 277.8624 271.268227 
+L 277.8624 244.657027 
+L 253.91232 244.657027 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #e3c79a; stroke: #2b2b2b; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 253.91232 243.326467 
+L 277.8624 243.326467 
+L 277.8624 216.715267 
+L 253.91232 216.715267 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #e3c79a; stroke: #2b2b2b; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 253.91232 215.384707 
+L 277.8624 215.384707 
+L 277.8624 188.773507 
+L 253.91232 188.773507 
+z
+" clip-path="url(#p1031e5353e)" style="fill: #e3c79a; stroke: #2b2b2b; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_1">
+    <text style="font-size: 6.5px; font-family: 'Helvetica'; text-anchor: middle" x="118.1952" y="212.159933" transform="rotate(-0 118.1952 212.159933)">Deck 500 × 400</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 6.5px; font-family: 'Helvetica'; text-anchor: middle" x="118.1952" y="112.146173" transform="rotate(-0 118.1952 112.146173)">Side wall L 500 × 45</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 6.5px; font-family: 'Helvetica'; text-anchor: middle" x="118.1952" y="90.857213" transform="rotate(-0 118.1952 90.857213)">Side wall R 500 × 45</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 6.5px; font-family: 'Helvetica'; text-anchor: middle" x="90.69696" y="69.568253" transform="rotate(-0 90.69696 69.568253)">Front wall 376 × 45</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 6.5px; font-family: 'Helvetica'; text-anchor: middle" x="90.69696" y="48.279293" transform="rotate(-0 90.69696 48.279293)">Rear wall 376 × 45</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(240.141729 222.593878) rotate(-90)">Sonar strip</text>
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(245.487979 220.306378) rotate(-90)">400 × 50</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(260.053766 284.503528)">Riser</text>
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(258.866266 289.849778)">60×60</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(260.053766 256.561768)">Riser</text>
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(258.866266 261.908018)">60×60</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(260.053766 228.620008)">Riser</text>
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(258.866266 233.966258)">60×60</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(260.053766 200.678248)">Riser</text>
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(258.866266 206.024498)">60×60</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 6.5px; font-family: 'Helvetica'; text-anchor: middle" x="142.5888" y="25.05175" transform="rotate(-0 142.5888 25.05175)">12 mm plywood, 2 ft × 2 ft (610 × 610) · 3 mm saw cuts allowed</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(248.382282 188.368546)">2 risers stacked</text>
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(254.772516 193.714796)">per caster</text>
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(250.605329 199.105109)">(24 mm, sand</text>
+    <text style="font-size: 5px; font-family: 'Helvetica'" transform="translate(259.495173 204.495421)">to 23)</text>
+   </g>
+   <g id="text_13">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'Helvetica'; text-anchor: start; fill: #2b2b2b" x="2.88" y="9.357187" transform="rotate(-0 2.88 9.357187)">Plywood cut plan  ·  mm</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p1031e5353e">
+   <rect x="2.88" y="15.357187" width="279.4176" height="288.288"/>
+  </clipPath>
+ </defs>
+</svg>
