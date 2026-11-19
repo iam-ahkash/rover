@@ -92,7 +92,7 @@ deck = L["deck"]
 DT = L["deck_top"]
 box = L["box"]
 lid_top = box["z0"] + box["h"] + box["lid"]
-caster_wheel_x = L["caster_x"] - 20
+caster_wheel_x = L["caster_x"] - 15
 
 # ------------------------------------------------------------------ side view
 fig, ax = plt.subplots(figsize=(7.4, 4.6))
@@ -161,7 +161,7 @@ labels = [  # text, anchor, text position, alignment
     ("3S2P battery 65×56×37", "Battery_3S2P", (-290, 0), "right"),
     ("BMS 3S 25A", "Battery_BMS", (-290, 62), "right"),
     ("Fuse 10 A + XT60", "Fuse_holder", (-290, 115), "right"),
-    ("Main switch (rear wall)", "Rocker_switch_KCD1_body", (-290, 175), "right"),
+    ("Main switch (rear wall)", "Rocker_switch_body_15A", (-290, 175), "right"),
     ("XL4015 to 5 V", "XL4015", (60, -150), "left"),
     ("ESP32 DevKit", "ESP32_DevKit", (60, 40), "left"),
     ("Phone 163×76 on 10 mm foam", "Phone_Redmi", (300, 0), "left"),
@@ -212,7 +212,7 @@ dim(ax, (deck["x0"], -200), (L["caster_x"], -200), -335, f"{L['caster_x'] - deck
 dim(ax, (L["caster_x"], -L["caster_y"]), (L["caster_x"], L["caster_y"]), 300, f"{2 * L['caster_y']}", vertical=True, side=1)
 dim(ax, (L["axle_x"], -L["wheel_yc"]), (L["axle_x"], L["wheel_yc"]), -300, f"track {2 * L['wheel_yc']}", vertical=True, side=-1)
 ax.text(-110, 0, "JGB37-520 + Hall encoder\n(gearbox Ø37, can Ø35.5,\nmotor 74 long)", ha="center", va="center", fontsize=6.5)
-ax.text(195, 0, "2\" casters on\n60×60×23 risers", ha="center", va="center", fontsize=6.5)
+ax.text(195, 0, "2.25\" casters on\n60×60×33 risers", ha="center", va="center", fontsize=6.5)
 ax.text(256, 0, "sonar strip", rotation=90, ha="center", va="center", fontsize=6)
 finish(fig, ax, "dwg_under", (-340, 340), (-350, 290), "Underside: parts below the deck, seen through it from above  ·  mm")
 
@@ -232,7 +232,7 @@ for s in (1, -1):
     ax.text((x0 + x1) / 2, (y0 + y1) / 2, "motor bracket\n(underside)", ha="center", va="center", fontsize=5)
     rx0, ry0 = D(L["caster_x"] - 30, s * L["caster_y"] + 30)
     ax.add_patch(Rectangle((rx0, ry0), 60, 60, fc="#d8b483", ec=INK, lw=0.5, ls="--"))
-    ax.text(rx0 + 30, ry0 + 30, "caster +\nriser\n(underside)\n4× M4", ha="center", va="center", fontsize=5)
+    ax.text(rx0 + 30, ry0 + 30, "caster +\nriser\n(underside)", ha="center", va="center", fontsize=5)
     holes.append(("Wire hole (motor + encoder cables)", "Ø16", *D(-150, s * 160)))
 for x in (-200, -60, 80, 220):
     for s in (1, -1):
@@ -265,13 +265,13 @@ cuts = [("Deck 500 × 400", 0, 0, 500, 400, "#d8b483"),
         ("Side wall L 500 × 45", 0, 403, 500, 45, "#c9a26d"), ("Side wall R 500 × 45", 0, 451, 500, 45, "#c9a26d"),
         ("Front wall 376 × 45", 0, 499, 376, 45, "#c9a26d"), ("Rear wall 376 × 45", 0, 547, 376, 45, "#c9a26d"),
         ("Sonar strip\n400 × 50", 503, 0, 50, 400, "#d8b483")]
-for i in range(4):
+for i in range(6):
     cuts.append(("Riser\n60×60", 556, i * 63, 54 + 0, 60, "#e3c79a"))
 for t, x, y, w, h, c in cuts:
     ax.add_patch(Rectangle((x, y), w, h, fc=c, ec=INK, lw=0.6))
     ax.text(x + w / 2, y + h / 2, t, ha="center", va="center", fontsize=6.5 if w > 60 else 5, rotation=90 if (h > 2.5 * w and w < 60) else 0)
 ax.text(305, 615, "12 mm plywood, 2 ft × 2 ft (610 × 610) · 3 mm saw cuts allowed", ha="center", va="bottom", fontsize=6.5)
-ax.text(583, 258, "2 risers stacked\nper caster\n(24 mm, sand\nto 23)", ha="center", va="top", fontsize=5)
+ax.text(495, 572, "Risers: glue 3 per caster\n(36 mm), plane to 33 mm", ha="center", va="center", fontsize=6.5)
 ax.set_xlim(-10, 620); ax.set_ylim(-10, 640); ax.set_aspect("equal"); ax.axis("off")
 ax.set_title("Plywood cut plan  ·  mm", fontsize=9, loc="left", color=INK, fontweight="bold")
 fig.savefig(os.path.join(IMG, "dwg_cut.svg"), bbox_inches="tight", pad_inches=0.04)

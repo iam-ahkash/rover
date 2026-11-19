@@ -10,7 +10,7 @@ a = s.index("<h2>Bill of materials")
 b = s.index("<h2>Component sizes used in the model</h2>")
 body = s[a:b].replace('<div class="page"></div>', '<div class="page"></div>')
 html = (head + "<h1>Delivery Rover: Parts List</h1>"
-        "<p class='sub'>Full-body box with the electronics underneath · 7 ultrasonic sensors · prices checked 18 Nov 2026 · links are clickable</p>"
+        "<p class='sub'>Full-body box with the electronics underneath · 7 ultrasonic sensors · Colombo shops first · prices checked 19 Nov 2026 · links are clickable</p>"
         + body + "</body></html>")
 out = os.path.join(DOCS, "delivery_rover_BOM.html")
 open(out, "w").write(html)

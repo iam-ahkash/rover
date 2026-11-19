@@ -8,7 +8,7 @@ A self-driving delivery rover that carries a 5 kg package. The storage box is th
 |---|---|
 | Size (length × width × height) | 549 × 530 × 415 mm |
 | Mass, empty / with a 5 kg package | 6.1 kg / 11.1 kg |
-| Drive | 2 × JGB37-520 60 RPM motors with Hall encoders, 130 mm wheels, 2 swivel casters at the front |
+| Drive | 2 × JGB37-520 60 RPM motors with Hall encoders, 130 mm wheels, 2 × 2.25" swivel casters at the front |
 | Speed | 0.41 m/s |
 | Sensors | phone (GPS, compass, IMU), USB webcam, 7 × HC-SR04 ultrasonic (front, sides, rear) |
 | Power | 3S2P 18650 pack (11.1 V, about 55 Wh) |
@@ -16,7 +16,7 @@ A self-driving delivery rover that carries a 5 kg package. The storage box is th
 ## Documents
 
 - [Build pack (PDF)](docs/delivery_rover_build_pack.pdf): renders, dimensioned drawings, ultrasonic coverage, plywood cut plan, drilling template, materials, wiring and ESP32 pin map, assembly steps, weight and balance.
-- [Parts list (PDF)](docs/delivery_rover_BOM.pdf): every part with Sri Lankan shop links and prices, fasteners and tools.
+- [Parts list (PDF)](docs/delivery_rover_BOM.pdf): every part with shop links and prices, fasteners and tools. Colombo shops first (alphatronic.lk, tronic.lk); only the wheels and motor brackets come from duino.lk. About Rs 38,200 in all.
 - [3D viewer](docs/rover_viewer.html): download the file and open it in a browser to turn the model, hide the box and click parts. It loads three.js from the internet.
 
 ## 3D files
@@ -44,4 +44,4 @@ python3 src/make_bom_pdf.py    # parts list PDF
 
 The 3D pictures in `docs/img/render_*.png` are screenshots of `docs/rover_viewer.html?shot=1&view=iso` taken with a headless browser.
 
-Three sizes are typical values, not measured: the 37 mm motor bracket, the 2" caster height and the webcam. Check yours. The riser under each caster is 93 mm minus the caster's height.
+Two sizes are typical values, not measured: the 37 mm motor bracket and the webcam. Check yours. The casters are tronic.lk's 2.25" swivel (60 mm high), so the riser under each is 33 mm (93 mm minus the caster's height).

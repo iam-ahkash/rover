@@ -14,51 +14,67 @@ def rs(n):
 
 
 # ------------------------------------------------------------------ bought parts
+T = "https://tronic.lk/product/"
+AL = "https://alphatronic.lk/product/"
 DARAZ = [("JGB37-520 12 V 60 RPM geared motor with Hall encoder. Options: <b>Without Stand / 60RPM / 12V</b>", 2, 4909,
           "https://www.daraz.lk/products/jgb37-520-hall-encoder-dc-geared-motor-6v12v-reversible-high-torque-21kgcm-all-metal-geared-dc-motor-with-hall-encoder-i750970075.html")]
 ALPHA = [
-    ("Double BTS7960 43 A motor driver (1 per motor)", 2, 1250, "https://alphatronic.lk/product/double-bts7960-43a-motor-driver-module/"),
-    ("XL4015 buck converter, set to 5.1 V", 1, 340, "https://alphatronic.lk/product/xl4015-dc-to-dc-step-down-buck-adjustable-module/"),
-    ("MG90S metal-gear servo (lid latch)", 1, 580, "https://alphatronic.lk/product/mg90s-metal-gear-micro-servo-9g/"),
-    ("USB webcam HD-U01, 1080p 30 fps, 90° wide angle", 1, 2850, "https://alphatronic.lk/product/usb-laptop-pc-camera-hd-u01-1080p-webcam/"),
-    ("USB-C male to USB-A female OTG cable, 15 cm", 1, 450, "https://alphatronic.lk/product/usb-c-male-to-usb-3-0-a-female-otg-cable/"),
+    ("Double BTS7960 43 A motor driver (1 per motor)", 2, 1250, AL + "double-bts7960-43a-motor-driver-module/"),
+    ("XL4015 buck converter, set to 5.1 V", 1, 340, AL + "xl4015-dc-to-dc-step-down-buck-adjustable-module/"),
+    ("MG90S metal-gear servo (lid latch)", 1, 580, AL + "mg90s-metal-gear-micro-servo-9g/"),
+    ("USB webcam HD-U01, 1080p 30 fps, 90° wide angle", 1, 2850, AL + "usb-laptop-pc-camera-hd-u01-1080p-webcam/"),
+    ("Panel-mount 5 × 20 mm glass fuse holder", 1, 50, AL + "glass-fuse-holder-panel-mount-fuse-socket/"),
+    ("Resistors 1/4 W: <b>1.5 kΩ × 7 and 2.2 kΩ × 7</b> (echo dividers)", 14, 1, AL + "resistor-1-4w-10w-to-1mw/"),
+    ("14 AWG silicone wire, 1 m: <b>1 red, 1 black</b> (battery and motor power)", 2, 340, AL + "14awg-silicone-wire-1m-red-black/"),
+    ("24 AWG circuit wire per metre: <b>3 red, 3 black, 2 green, 2 yellow</b> (signals, 5 V)", 10, 30, AL + "circuit-wire-24awg/"),
+    ("Heat shrink per metre: <b>2.5 mm × 2, 5 mm × 1, 8 mm × 1</b>", 1, 170, AL + "heat-shrink-tubing-1mm-28mm/"),
+    ("Cable ties 4 × 150 mm, pack of 10", 2, 25, AL + "cable-tie-4x150mm-10pcs/"),
+    ("M3 × 6 bolt + nut (motor to bracket)", 8, 15, AL + "m3-phillips-head-bolts-with-nuts/"),
+    ("M3 × 10 bolt + nut (driver boards, buck converter, webcam)", 14, 15, AL + "m3-phillips-head-bolts-with-nuts/"),
+    ("M4 hex nut, stainless (bracket bolts)", 8, 10, AL + "m4-hex-nut-stainless-steel/"),
+]
+TRONIC = [
+    ("HC-SR04 ultrasonic sensor (3 front, 2 rear, 2 sides)", 7, 280, T + "hc-sr04-4pin-ultrasonic-sensor-module"),
+    ("18650 3.7 V 3200 mAh cell (Good Quality)", 6, 620, T + "18650-flat-top-3-7v-3200ma-li-ion-rechargeable-battery-"),
+    ("3S 40 A BMS protection board", 1, 420, T + "li-ion-18650-3s-40a-bms-pcm-battery-protection-board"),
+    ("12.6 V 2 A SMPS adapter (charger; the BMS stops the charge)", 1, 850, T + "12-6v-2a-smps-power-adapter"),
+    ("Caster 2.25\" TPR swivel, 60 mm high, plate 60 × 43", 2, 960, T + "caster-wheel-2-25-inch-small-tpr-swivel-silent"),
+    ("XT60 male and female pair (battery plug)", 1, 80, T + "xt60-male-female-bullet-connectors-plugs-for-rc-lipo-ba"),
+    ("SPDT rocker switch 15 A 250 V (main power and kill switch)", 1, 30, T + "spdt-black-rectangular-rocker-switch-big-3-pin-250vac-1"),
+    ("Glass fuse 10 A, 5 × 20 mm (1 spare)", 2, 4, T + "glass-fuse-230vac-10a-5x20mm"),
+    ("Vero dot board 90 × 70 mm (echo dividers, power rail)", 2, 50, T + "vero-dot-board-90x70mm-single-layer-prototype-pcb"),
+    ("Jumper wires female to female, 30 cm, strip of 40", 1, 180, T + "long-jumper-wire-female-to-female-1x40-pin-30cm"),
+    ("OTG adapter, USB-C male to USB-A female (phone to webcam)", 1, 80, T + "otg-adapter-type-c"),
+    ("M4 × 20 pan-head bolt (brackets to deck)", 8, 10, T + "m4-20mm-pan-head-bolt"),
+    ("M3 nylon spacer 5 mm (under the boards)", 12, 2, T + "m3-black-nylon-spacer-h-5mm-id-3mm-od-7mm-standoff-wash"),
+    ("Rubber grommet 8 mm (webcam cable through the box floor)", 2, 5, T + "rubber-grommets-8mm"),
 ]
 DUINO = [
-    ("130 mm truck wheel, 60 mm wide, 6 mm coupling (blue)", 2, 1890, "https://www.duino.lk/product/130mm-truck-wheels-tires-60mm-width/"),
-    ("GA/GB 37 mm geared motor mounting bracket", 2, 580, "https://www.duino.lk/product/ga-gb-37mm-diameter-dc-geared-motor/"),
-    ("18650 3.7 V 3200 mAh cell", 6, 680, "https://www.duino.lk/product/battery-3800mah-3-7v-18650-rechargeable/"),
-    ("3S 25 A BMS 12.6 V with balance", 1, 470, "https://www.duino.lk/product/3s-bms-11-1v-12-6v-25a-w-balance-li-ion-battery/"),
-    ("12.6 V 2 A charger", 1, 1190, "https://www.duino.lk/product/12-6v-2a-3pin-ac-dc-power-adaptor/"),
-    ("HC-SR04 ultrasonic sensor (3 front, 2 rear, 2 sides) <span class='new'>+4</span>", 7, 275, "https://www.duino.lk/product/ultrasonic-distance-measuring-transducer/"),
-    ("KCD1 10 A rocker switch (main power and kill switch)", 1, 90, "https://www.duino.lk/product/kcd1-rocker-switch-red-10a-250v-ac-4-pin/"),
-    ("5 × 20 mm fuse holder", 1, 60, "https://www.duino.lk/product/10a-250v-5x20mm-glass-fuse-holder/"),
-    ("XT60 male and female pair (battery plug)", 1, 110, "https://www.duino.lk/product/xt-60-male-female-bullet-connectors-plugs/"),
+    ("130 mm truck wheel, 60 mm wide, 6 mm coupling (blue): <b>not sold in Colombo</b>", 2, 1890, "https://www.duino.lk/product/130mm-truck-wheels-tires-60mm-width/"),
+    ("GA/GB 37 mm geared motor mounting bracket: alphatronic is out of stock", 2, 580, "https://www.duino.lk/product/ga-gb-37mm-diameter-dc-geared-motor/"),
 ]
 SHOP = [
     ("Plastic storage box with lid, about 48 L, footprint 500 × 400 (or smaller), about 250 high <span class='new'>body</span>", "1", 3000),
-    ("12 mm plywood, 2 ft × 2 ft (610 × 610): deck, 4 walls, sonar strip, risers", "1", 1000),
-    ("2\" (50 mm) swivel caster, rated 10 kg or more, about 70 mm high", "2", 900),
-    ("Screws, bolts, nuts and washers (see the fastener list)", "set", 900),
-    ("18 AWG red/black wire 2 m each, 26 AWG hook-up wire, Dupont jumpers, heat shrink", "set", 700),
-    ("Resistors 1 kΩ and 2 kΩ, 7 of each (5 V to 3.3 V echo dividers), small perfboard", "set", 100),
-    ("Spot-weld the 6 cells into a 3S2P pack (battery or phone-repair shop)", "1", 500),
-    ("10 A glass fuses, 5 × 20 mm", "2", 50),
+    ("12 mm plywood, 2 ft × 2 ft (610 × 610): deck, 4 walls, sonar strip, 6 risers", "1", 1000),
+    ("M4 × 60 bolts, nyloc nuts and 25 mm washers (casters), wood screws 4 × 40 and 4 × 30, M4 washers", "set", 600),
+    ("Spot-weld the 6 cells into a 3S2P pack with nickel strip (battery or phone-repair shop)", "1", 500),
+    ("Double-sided foam tape and a Velcro strap (ESP32, BMS, battery)", "set", 150),
 ]
 FASTENERS = [
     ("Motor to bracket", "M3 × 6 machine screw", 8, "4 per motor, into the gearbox face"),
-    ("Bracket to deck underside", "M4 × 20 bolt + nut + washer (or 4 × 20 wood screw)", 8, "mark through the bracket holes"),
-    ("Caster + riser to deck", "M4 × 50 bolt + nyloc nut + 2 washers", 8, "through caster plate, 2 riser layers and deck"),
+    ("Bracket to deck underside", "M4 × 20 pan-head bolt + M4 nut + washer", 8, "mark through the bracket holes"),
+    ("Caster + riser to deck", "M4 × 60 bolt + nyloc nut + 2 washers", 8, "through caster plate, 33 mm riser and deck"),
     ("Walls to deck", "4 × 40 countersunk wood screw", 14, "up through the deck (holes 3–16 on the template)"),
     ("Wall corners", "4 × 30 wood screw + PVA glue", 8, "2 per corner"),
     ("Box floor to wall tops", "4 × 30 wood screw + 25 mm washer", 6, "from inside the box, down into the wall tops"),
     ("Sonar strip to deck front edge", "4 × 30 wood screw", 3, ""),
-    ("BTS7960, XL4015 to deck", "M3 × 10 screw + 5 mm nylon spacer", 12, "or 3 × 12 wood screws"),
+    ("BTS7960, XL4015 to deck", "M3 × 10 bolt + nut + 5 mm nylon spacer", 12, "bolt through the deck"),
     ("ESP32 and BMS", "double-sided foam tape", "—", ""),
     ("HC-SR04 (7)", "hot glue or 2 × M2 screws each", "—", "wall sensors: board inside, cans through Ø16.5 holes"),
     ("Servo latch", "2 × M2 × 10 + nuts", 2, "rear wall of the box, under the lid lip"),
     ("Webcam bracket", "M3 × 10 + nut, 2 washers", 2, "front face of the box"),
     ("Battery pack", "Velcro strap or 2 cable ties", 1, ""),
-    ("Wiring", "cable ties 100 mm, adhesive tie bases", "20", ""),
+    ("Wiring", "cable ties 4 × 150 mm", "20", ""),
 ]
 TOOLS = ["Drill with 3, 4.5, 8 mm bits; 16 mm spade bit or hole saw", "Jigsaw or hand saw; sandpaper", "Screwdrivers, 7 mm and 8 mm spanners",
          "Soldering iron, solder, flux; hot-glue gun", "Multimeter (set the XL4015 to 5.1 V before connecting anything)", "Wire stripper; heat gun or lighter for heat shrink"]
@@ -70,10 +86,10 @@ DIMS = [
     ("Wheel", "Ø130 × 60, 6 mm hub", "listing"),
     ("JGB37-520 motor", "gearbox Ø37 × 26.5, can Ø35.5 × 30.5, encoder Ø34 × 17; shaft Ø6 D, 7 mm off centre", "datasheet, check yours"),
     ("37 mm bracket", "plate 44 × 46, flange 44 × 30, 2.5 thick (modelled)", "measure yours"),
-    ("2\" caster", "70 high, plate 50 × 50, wheel Ø50 × 18, 20 mm trail", "measure: riser = 93 − caster height"),
-    ("Riser block", "60 × 60 × 23 (2 × 12 mm plywood, sanded)", "cut list"),
+    ("2.25\" caster (tronic)", "60 high, plate 60 × 43, wheel Ø40 × 19.5, about 15 mm trail", "listing; riser = 93 − caster height"),
+    ("Riser block", "60 × 60 × 33 (3 × 12 mm plywood, planed to 33)", "cut list"),
     ("3S2P pack", "65 × 56 × 37 (6 × 18650 Ø18.4 × 65)", "calculated"),
-    ("BMS 3S 25 A", "60 × 45 × 4", "typical"),
+    ("BMS 3S 40 A", "60 × 45 × 4", "typical"),
     ("BTS7960 module", "50 × 50, about 37 high with heatsink", "typical"),
     ("XL4015 module", "54 × 23 × 15", "typical"),
     ("ESP32 DevKit 30-pin", "52 × 28 × 13", "typical"),
@@ -91,7 +107,7 @@ PINS = [
     ("Sonar trigger group 1: front-centre + rear-left", "GPIO 4", "groups never face the same way"),
     ("Sonar trigger group 2: front-left + side-right + rear-right", "GPIO 16", "fire groups one after another"),
     ("Sonar trigger group 3: front-right + side-left", "GPIO 17", "full scan about 75 ms (13 Hz)"),
-    ("Echo F-L / F-C / F-R", "GPIO 34 / 35 / 36", "each through 1 kΩ (series) + 2 kΩ (to GND)"),
+    ("Echo F-L / F-C / F-R", "GPIO 34 / 35 / 36", "each through 1.5 kΩ (series) + 2.2 kΩ (to GND): 2.97 V"),
     ("Echo S-L / S-R", "GPIO 39 / 27", "divider as above"),
     ("Echo B-L / B-R", "GPIO 14 / 23", "divider as above"),
     ("Servo signal", "GPIO 13", "servo powered from 5 V"),
@@ -101,24 +117,27 @@ PINS = [
 
 STEPS = [
     "Cut the plywood (cut plan). Glue and screw the four walls into a frame, then screw the frame to the deck from below (14 countersunk screws).",
-    "Drill the deck: two Ø16 wire holes, the wall-screw holes, then the bracket and caster holes by marking through the parts. Cut the 40 × 15 vent slots and the Ø16.5 sensor holes in the walls, and the 19 × 13 switch hole in the rear wall (thin the wall to about 2 mm around it from inside so the clips grip).",
+    "Drill the deck: two Ø16 wire holes, the wall-screw holes, then the bracket and caster holes by marking through the parts. Cut the 40 × 15 vent slots and the Ø16.5 sensor holes in the walls, and the 28 × 12.5 switch hole in the rear wall (thin the wall to about 2 mm around it from inside so the clips grip).",
     "Fit the motors to the brackets (shaft at the bottom, 7 mm below the gearbox centre), bolt the brackets under the deck with the axle 140 mm from the rear edge, and push the wheels on and tighten their grub screws.",
-    "Stack two 60 × 60 risers under each caster and bolt them through the deck, 445 mm from the rear edge and 60 mm in from each side. Check the deck sits level; sand the risers if not.",
-    "Have the cells spot-welded as 3S2P, solder the BMS balance leads, and fit the XT60. Charge it once with the 12.6 V charger.",
+    "Glue three 60 × 60 risers into a block for each caster, plane it to 33 mm, put it under the caster and bolt them through the deck, 445 mm from the rear edge and 60 mm in from each side. Check the deck sits level; sand the risers if not.",
+    "Have the cells spot-welded as 3S2P, solder the BMS balance leads, and fit the XT60. Charge it once with the 12.6 V adapter, through the BMS.",
     "Set the XL4015 to 5.1 V with the multimeter <b>before</b> connecting anything to it.",
     "Mount the boards (layout drawing). Wire the power path: battery, XT60, fuse, rocker switch, then the BTS7960s and the XL4015. Join all grounds at one point.",
     "Build the 7 echo dividers on perfboard, wire the sensors and the encoders to the ESP32 (pin map), and route the motor and encoder cables up through the Ø16 holes.",
     "Screw the sonar strip to the front edge; glue the front-left and front-right sensors on 30° wedges. Fit the wall sensors from inside.",
-    "Put the phone on the foam pad (screen up, at the front), plug in the OTG cable and lead it up to the webcam through a small grommet in the box floor.",
+    "Put the phone on the foam pad (screen up, at the front), plug in the OTG adapter and lead the webcam cable to the webcam through a small grommet in the box floor.",
     "Screw the box floor down onto the wall tops, mount the webcam (about 300 mm up, tilted 12° down) and the servo latch, and calibrate the phone compass with everything powered.",
 ]
 
 daraz = sum(q * p for _, q, p, _ in DARAZ)
 alpha = sum(q * p for _, q, p, _ in ALPHA)
+tronic = sum(q * p for _, q, p, _ in TRONIC)
 duino = sum(q * p for _, q, p, _ in DUINO)
 shop = sum(p for _, _, p in SHOP)
-delivery = 1330
-total = daraz + alpha + duino + shop + delivery
+delivery = 830
+total = daraz + alpha + tronic + duino + shop + delivery
+n1, n2, n3 = 1 + len(DARAZ), 1 + len(DARAZ) + len(ALPHA), 1 + len(DARAZ) + len(ALPHA) + len(TRONIC)
+n4 = n3 + len(DUINO)
 
 
 def table_buy(rows, start):
@@ -162,7 +181,7 @@ pre {{ font-size: 7.6pt; background: #f8fafc; border: 1px solid #ddd; padding: 6
 </style></head><body>
 
 <h1>Delivery Rover: Build Pack</h1>
-<p class="sub">5 kg payload · the storage box is the whole body · electronics in a closed compartment underneath · phone inside as the brain · 7 ultrasonic sensors · all sizes in mm · 18 Nov 2026</p>
+<p class="sub">5 kg payload · the storage box is the whole body · electronics in a closed compartment underneath · phone inside as the brain · 7 ultrasonic sensors · all sizes in mm · 19 Nov 2026</p>
 <img class="fig" src="img/render_iso.png" style="width:82%">
 <div class="grid2">
 <table class="kv">
@@ -215,19 +234,22 @@ pre {{ font-size: 7.6pt; background: #f8fafc; border: 1px solid #ddd; padding: 6
 
 <div class="page"></div>
 <h2>Bill of materials <span class="r">≈ Rs {rs(total)}</span></h2>
-<h3>daraz.lk: Rs {rs(daraz)} (log in and add to cart)</h3>{table_buy(DARAZ, 1)}
-<h3>alphatronic.lk: Rs {rs(alpha)} (in cart)</h3>{table_buy(ALPHA, 2)}
-<h3>duino.lk: Rs {rs(duino)} (in cart)</h3>{table_buy(DUINO, 7)}
-<p class="note">ESP32: using your own. duino has the ESP32 CP2102 Type-C 30-pin for Rs 1,570 if needed.</p>
+<p class="note">Colombo first: alphatronic.lk and tronic.lk have almost everything. Only the 130 mm wheels and the 37 mm brackets come from duino.lk (Kandy), because no Colombo shop has them in stock. Prices checked on the shop pages on 19 Nov 2026.</p>
+<h3>daraz.lk: Rs {rs(daraz)} (delivered)</h3>{table_buy(DARAZ, 1)}
+<h3>alphatronic.lk (Colombo): Rs {rs(alpha)}</h3>{table_buy(ALPHA, n1)}
+<h3>tronic.lk (Colombo): Rs {rs(tronic)}</h3>{table_buy(TRONIC, n2)}
+<h3>duino.lk (Kandy, delivered): Rs {rs(duino)}</h3>{table_buy(DUINO, n3)}
+<p class="note">ESP32: using your own. Search tronic.lk with Google ("site:tronic.lk ..."): the shop's own search misses items.</p>
 <h3>Hardware shop (estimates): about Rs {rs(shop)}</h3>
 <table><tr><th>#</th><th>Item</th><th class="n">Qty</th><th class="n">About</th></tr>
-{''.join(f"<tr><td>{16 + i}</td><td>{n}</td><td class='n'>{q}</td><td class='n'>{rs(p)}</td></tr>" for i, (n, q, p) in enumerate(SHOP))}</table>
+{''.join(f"<tr><td>{n4 + i}</td><td>{n}</td><td class='n'>{q}</td><td class='n'>{rs(p)}</td></tr>" for i, (n, q, p) in enumerate(SHOP))}</table>
 <table>
-<tr><td>daraz.lk</td><td class="n">{rs(daraz)}</td></tr><tr><td>alphatronic.lk</td><td class="n">{rs(alpha)}</td></tr>
-<tr><td>duino.lk</td><td class="n">{rs(duino)}</td></tr><tr><td>Hardware shop (estimate)</td><td class="n">{rs(shop)}</td></tr>
-<tr><td>Delivery (duino 480, alphatronic about 500, Daraz about 350)</td><td class="n">about {rs(delivery)}</td></tr>
+<tr><td>daraz.lk</td><td class="n">{rs(daraz)}</td></tr><tr><td>alphatronic.lk (Colombo)</td><td class="n">{rs(alpha)}</td></tr>
+<tr><td>tronic.lk (Colombo)</td><td class="n">{rs(tronic)}</td></tr><tr><td>duino.lk (Kandy)</td><td class="n">{rs(duino)}</td></tr>
+<tr><td>Hardware shop (estimate)</td><td class="n">{rs(shop)}</td></tr>
+<tr><td>Delivery (duino about 480, Daraz about 350; collect the Colombo orders yourself)</td><td class="n">about {rs(delivery)}</td></tr>
 <tr class="total"><td>Total (using your own phone and ESP32)</td><td class="n">≈ Rs {rs(total)}</td></tr></table>
-<div class="warn"><b>About Rs {rs(total - 35000)} over the Rs 35,000 budget.</b> Two changes push the total over: the full-body box (about Rs 3,000 instead of Rs 1,500 for the 20 L box) and 4 more HC-SR04 (Rs 1,100). The hardware-shop prices are estimates; a cheaper box is the biggest saving.</div>
+<div class="warn"><b>About Rs {rs(total - 35000)} over the Rs 35,000 budget.</b> The motors (Rs 9,818) and the full-body box (about Rs 3,000) are the biggest costs. The hardware-shop prices are estimates; a cheaper box is the easiest saving.</div>
 
 <div class="page"></div>
 <h2>Fasteners, consumables and tools</h2>

@@ -25,7 +25,7 @@ AXLE_X, AXLE_Z = -110, WHEEL_D / 2                         # drive axle 140 mm f
 SHAFT_OFFSET = 7                                           # JGB37 output shaft sits 7 mm off the gearbox centre
 GB_Z = AXLE_Z + SHAFT_OFFSET                               # gearbox centre (shaft turned to the bottom)
 WHEEL_YC = 235                                             # wheel centre line, each side
-CASTER_X, CASTER_Y, CASTER_H = 195, 140, 70                # swivel axis; 2" caster overall height
+CASTER_X, CASTER_Y, CASTER_H = 195, 140, 60                # swivel axis; tronic.lk 2.25" caster: 60 mm load height
 RISER = DECK["z0"] - CASTER_H                              # 23 mm block under each caster
 SONAR_Z, SIDE_SONAR_X, REAR_SONAR_Y = 127.5, 100, 110   # wall-mounted HC-SR04 centres
 WALL_H = 45                                                # electronics compartment walls (deck top -> box floor)
@@ -81,7 +81,7 @@ for s, side in ((1, "L"), (-1, "R")):
         w = w.cut(C(8.25, (tx, s * 186, SONAR_Z), "y", s * 16))
     add(f"Wall_side_{side}_500x45x12", "Chassis", w, "#c9a26d", 0.15)
 add("Wall_front_376x45x12", "Chassis", B(238, 250, -188, 188, DECK_TOP, WZ1), "#c9a26d", 0.11)
-rear = B(-250, -238, -188, 188, DECK_TOP, WZ1).cut(B(-251, -237, 141, 159, 121, 134))
+rear = B(-250, -238, -188, 188, DECK_TOP, WZ1).cut(B(-251, -237, 136, 164, 121.25, 133.75))   # 28 x 12.5 switch cut-out
 for yc in (REAR_SONAR_Y, -REAR_SONAR_Y):  # rear HC-SR04 transducer holes
     for ty in (yc - 13, yc + 13):
         rear = rear.cut(C(8.25, (-236, ty, SONAR_Z), "x", -16))
@@ -114,17 +114,17 @@ for s, side in ((1, "L"), (-1, "R")):
 for s, side in ((1, "L"), (-1, "R")):
     cy = s * CASTER_Y
     add(f"Caster_riser_block_{side}", "Chassis", B(CASTER_X - 30, CASTER_X + 30, cy - 30, cy + 30, CASTER_H, DECK["z0"]), PLY, 0.05)
-    wx = CASTER_X - 20  # wheel trails 20 mm behind the swivel axis
+    wx = CASTER_X - 15  # wheel trails 15 mm behind the swivel axis
     frame = fuse(
-        B(CASTER_X - 25, CASTER_X + 25, cy - 25, cy + 25, CASTER_H - 3, CASTER_H),
-        C(15, (CASTER_X, cy, CASTER_H - 10), "z", 7),
+        B(CASTER_X - 30, CASTER_X + 30, cy - 21.5, cy + 21.5, CASTER_H - 3, CASTER_H),   # 60 x 43 plate
+        C(14, (CASTER_X, cy, CASTER_H - 10), "z", 7),
         B(wx - 8, CASTER_X + 8, cy - 12.5, cy + 12.5, CASTER_H - 12, CASTER_H - 9),
-        B(wx - 8, CASTER_X + 8, cy + 10, cy + 12.5, 18, CASTER_H - 9),
-        B(wx - 8, CASTER_X + 8, cy - 12.5, cy - 10, 18, CASTER_H - 9),
-        C(4, (wx, cy - 14, 25), "y", 28),
+        B(wx - 8, CASTER_X + 8, cy + 10.5, cy + 12.5, 12, CASTER_H - 9),
+        B(wx - 8, CASTER_X + 8, cy - 12.5, cy - 10.5, 12, CASTER_H - 9),
+        C(3.5, (wx, cy - 14, 20), "y", 28),
     )
-    add(f"Caster_2in_swivel_frame_{side}", "Chassis", frame, STEEL, 0.04)
-    add(f"Caster_2in_wheel_{side}", "Chassis", C(25, (wx, cy - 9, 25), "y", 18), "#3d3d3d", 0.03)
+    add(f"Caster_2.25in_swivel_frame_{side}", "Chassis", frame, STEEL, 0.04)
+    add(f"Caster_2.25in_wheel_40mm_{side}", "Chassis", C(20, (wx, cy - 9.75, 20), "y", 19.5), "#3d3d3d", 0.03)
 
 # ---------------------------------------------------------------- electronics bay (deck top z = 105)
 Z = DECK_TOP
@@ -161,8 +161,8 @@ add("Phone_foam_pad", "Electronics", B(160, 236, -82, 82, Z, Z + 10), "#5c5c5c",
 add("Phone_Redmi_K50_Pro_163x76x8.5", "Electronics", B(160.4, 236.4, -81.55, 81.55, Z + 10, Z + 18.5), "#15171c", 0.23)
 
 # main switch (kill switch) in the rear wall
-add("Rocker_switch_KCD1_body", "Power", fuse(B(-253, -250, 139.5, 160.5, 120, 135), B(-250, -230, 141, 159, 121, 134)), BLACK, 0.008)
-add("Rocker_switch_KCD1_rocker", "Power", B(-256, -253, 142.5, 157.5, 122.5, 132.5), "#d62828", 0.002)
+add("Rocker_switch_body_15A", "Power", fuse(B(-253, -250, 135, 165, 120.5, 134.5), B(-250, -215, 136, 164, 121.25, 133.75)), BLACK, 0.008)
+add("Rocker_switch_rocker_15A", "Power", B(-256, -253, 137, 163, 122, 133), "#d62828", 0.002)
 
 for i, yc in enumerate((140, 0, -140)):
     hc = fuse(B(262, 263.6, yc - 22.5, yc + 22.5, 70, 90),
