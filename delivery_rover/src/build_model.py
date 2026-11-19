@@ -17,21 +17,28 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_MODEL = os.path.join(ROOT, "model")
 OUT_BUILD = os.path.join(ROOT, "build")
 
-# ---------------------------------------------------------------- key sizes
-DECK = dict(x0=-250, x1=250, y=200, z0=93, t=12)          # 500 x 400 x 12 plywood
-DECK_TOP = DECK["z0"] + DECK["t"]                          # 105
+# ---------------------------------------------------------------- key sizes (rev B: food parcels, 3 kg)
+SPACER = 12                                                # 12 mm plywood spacer under each motor bracket (lifts the deck for 3" casters)
+DECK = dict(x0=-200, x1=200, y=150, z0=93 + SPACER, t=12)  # 400 x 300 x 12 plywood
+DECK_TOP = DECK["z0"] + DECK["t"]                          # 117
 WHEEL_D, WHEEL_W = 130, 60
-AXLE_X, AXLE_Z = -110, WHEEL_D / 2                         # drive axle 140 mm from the rear edge
+AXLE_X, AXLE_Z = -85, WHEEL_D / 2                          # drive axle 115 mm from the rear edge
 SHAFT_OFFSET = 7                                           # JGB37 output shaft sits 7 mm off the gearbox centre
 GB_Z = AXLE_Z + SHAFT_OFFSET                               # gearbox centre (shaft turned to the bottom)
-WHEEL_YC = 235                                             # wheel centre line, each side
-CASTER_X, CASTER_Y, CASTER_H = 195, 140, 60                # swivel axis; tronic.lk 2.25" caster: 60 mm load height
-RISER = DECK["z0"] - CASTER_H                              # 23 mm block under each caster
-SONAR_Z, SIDE_SONAR_X, REAR_SONAR_Y = 127.5, 100, 110   # wall-mounted HC-SR04 centres
+WHEEL_YC = 185                                             # wheel centre line, each side
+CASTER_X, CASTER_Y, CASTER_H, CASTER_TRAIL = 135, 90, 100, 25   # 3" swivel caster: about 100 mm load height
+RISER = DECK["z0"] - CASTER_H                              # 5 mm shim under each caster
 WALL_H = 45                                                # electronics compartment walls (deck top -> box floor)
-BOX_Z0 = DECK_TOP + WALL_H                                 # 150: the cargo box sits on the walls
-BOX = dict(x0=-250, x1=250, y=200, z0=BOX_Z0, h=250, lid=15)    # 500 x 400 x 265, about 48 L: the whole body
+SONAR_Z = DECK_TOP + WALL_H / 2                            # wall-mounted HC-SR04 centres
+SIDE_SONAR_X, REAR_SONAR_Y = 40, 70
+STRIP_Z0 = DECK_TOP - 50                                   # front sonar strip, 50 high, screwed to the deck front edge
+FRONT_Z = STRIP_Z0 + 25
+FRONT_Y = 95
+BOX_Z0 = DECK_TOP + WALL_H                                 # 162: the cargo box sits on the walls
+BOX = dict(x0=-200, x1=200, y=150, z0=BOX_Z0, h=250, lid=15)    # 400 x 300 x 265, about 25 L
 CAM_TILT = 12                                              # degrees down
+X0, X1, YW = DECK["x0"], DECK["x1"], DECK["y"]
+IW = YW - 12                                               # inner face of the side walls
 
 parts = []
 
@@ -64,72 +71,78 @@ def add(name, group, shape, color, mass, alpha=1.0):
 
 
 PLY, STEEL, ALU, BLACK = "#d8b483", "#9aa3ad", "#c9ced6", "#1c1c1c"
+WIRE_HOLE = (-128, 108)
 
 # ---------------------------------------------------------------- chassis
-deck = B(DECK["x0"], DECK["x1"], -DECK["y"], DECK["y"], DECK["z0"], DECK_TOP)
+deck = B(X0, X1, -YW, YW, DECK["z0"], DECK_TOP)
 for s in (1, -1):  # wire holes (motor + encoder cables come up into the bay)
-    deck = deck.cut(C(8, (-150, s * 160, DECK["z0"] - 1), "z", DECK["t"] + 2))
-add("Deck_plywood_500x400x12", "Chassis", deck, PLY, 1.44)
+    deck = deck.cut(C(8, (WIRE_HOLE[0], s * WIRE_HOLE[1], DECK["z0"] - 1), "z", DECK["t"] + 2))
+add("Deck_plywood_400x300x12", "Chassis", deck, PLY, 0.86)
 
-# electronics compartment: 12 mm plywood walls, 45 mm high, round the deck edge; the box floor is its roof
-WT, WZ1 = 12, DECK_TOP + WALL_H
+WZ1 = DECK_TOP + WALL_H
 for s, side in ((1, "L"), (-1, "R")):
-    w = B(-250, 250, *Y(188, 200, s), DECK_TOP, WZ1)
-    for vx in (-110, -40, 150):  # vent slots
-        w = w.cut(B(vx, vx + 40, *Y(186, 202, s), DECK_TOP + 15, DECK_TOP + 30))
+    w = B(X0, X1, *Y(IW, YW, s), DECK_TOP, WZ1)
+    for vx in (-150, -60, 110):  # vent slots
+        w = w.cut(B(vx, vx + 40, *Y(IW - 2, YW + 2, s), DECK_TOP + 15, DECK_TOP + 30))
     for tx in (SIDE_SONAR_X - 13, SIDE_SONAR_X + 13):  # side HC-SR04 transducer holes
-        w = w.cut(C(8.25, (tx, s * 186, SONAR_Z), "y", s * 16))
-    add(f"Wall_side_{side}_500x45x12", "Chassis", w, "#c9a26d", 0.15)
-add("Wall_front_376x45x12", "Chassis", B(238, 250, -188, 188, DECK_TOP, WZ1), "#c9a26d", 0.11)
-rear = B(-250, -238, -188, 188, DECK_TOP, WZ1).cut(B(-251, -237, 136, 164, 121.25, 133.75))   # 28 x 12.5 switch cut-out
+        w = w.cut(C(8.25, (tx, s * (IW - 2), SONAR_Z), "y", s * 16))
+    add(f"Wall_side_{side}_400x45x12", "Chassis", w, "#c9a26d", 0.13)
+add("Wall_front_276x45x12", "Chassis", B(X1 - 12, X1, -IW, IW, DECK_TOP, WZ1), "#c9a26d", 0.09)
+SW_Y = 115
+rear = B(X0, X0 + 12, -IW, IW, DECK_TOP, WZ1).cut(B(X0 - 1, X0 + 13, SW_Y - 14, SW_Y + 14, SONAR_Z - 6.25, SONAR_Z + 6.25))   # 28 x 12.5 switch cut-out
 for yc in (REAR_SONAR_Y, -REAR_SONAR_Y):  # rear HC-SR04 transducer holes
     for ty in (yc - 13, yc + 13):
-        rear = rear.cut(C(8.25, (-236, ty, SONAR_Z), "x", -16))
-add("Wall_rear_376x45x12", "Chassis", rear, "#c9a26d", 0.11)
+        rear = rear.cut(C(8.25, (X0 + 14, ty, SONAR_Z), "x", -16))
+add("Wall_rear_276x45x12", "Chassis", rear, "#c9a26d", 0.09)
 
-add("Sonar_strip_plywood_400x50x12", "Chassis", B(250, 262, -200, 200, 55, 105), PLY, 0.14)
+add("Sonar_strip_plywood_300x50x12", "Chassis", B(X1, X1 + 12, -YW, YW, STRIP_Z0, DECK_TOP), PLY, 0.11)
 
 # ---------------------------------------------------------------- drive (each side)
+BY = YW - 5            # outer face of the bracket plate (145)
 for s, side in ((1, "L"), (-1, "R")):
-    plate = B(AXLE_X - 22, AXLE_X + 22, *Y(192.5, 195, s), 47, DECK["z0"])
-    plate = plate.cut(C(6.5, (AXLE_X, s * 190, AXLE_Z), "y", s * 10))
-    flange = B(AXLE_X - 22, AXLE_X + 22, *Y(165, 195, s), DECK["z0"] - 2, DECK["z0"])
+    plate = B(AXLE_X - 22, AXLE_X + 22, *Y(BY - 2.5, BY, s), 47, 93)
+    plate = plate.cut(C(6.5, (AXLE_X, s * (BY - 5), AXLE_Z), "y", s * 10))
+    flange = B(AXLE_X - 22, AXLE_X + 22, *Y(BY - 30, BY, s), 91, 93)
     add(f"Motor_bracket_37mm_{side}", "Drive", fuse(plate, flange), STEEL, 0.05)
+    add(f"Bracket_spacer_plywood_44x30x12_{side}", "Chassis", B(AXLE_X - 22, AXLE_X + 22, *Y(BY - 30, BY, s), 93, DECK["z0"]), PLY, 0.01)
 
-    add(f"Motor_gearbox_JGB37_{side}", "Drive", C(18.5, (AXLE_X, s * 192.5, GB_Z), "y", -s * 26.5), "#b9b9b9", 0.09)
-    add(f"Motor_can_520_{side}", "Drive", C(17.75, (AXLE_X, s * 166, GB_Z), "y", -s * 30.5), "#7d838b", 0.08)
-    enc = fuse(C(17, (AXLE_X, s * 135.5, GB_Z), "y", -s * 17),
-               B(AXLE_X - 27, AXLE_X - 17, *Y(121, 131, s), GB_Z - 6, GB_Z + 6))
+    g0 = BY - 2.5
+    add(f"Motor_gearbox_JGB37_{side}", "Drive", C(18.5, (AXLE_X, s * g0, GB_Z), "y", -s * 26.5), "#b9b9b9", 0.09)
+    add(f"Motor_can_520_{side}", "Drive", C(17.75, (AXLE_X, s * (g0 - 26.5), GB_Z), "y", -s * 30.5), "#7d838b", 0.08)
+    e0 = g0 - 57
+    enc = fuse(C(17, (AXLE_X, s * e0, GB_Z), "y", -s * 17),
+               B(AXLE_X - 27, AXLE_X - 17, *Y(e0 - 14.5, e0 - 4.5, s), GB_Z - 6, GB_Z + 6))
     add(f"Motor_Hall_encoder_{side}", "Drive", enc, BLACK, 0.03)
-    add(f"Motor_shaft_6mm_{side}", "Drive", C(3, (AXLE_X, s * 192.5, AXLE_Z), "y", s * 17), "#d0d0d0", 0.005)
+    add(f"Motor_shaft_6mm_{side}", "Drive", C(3, (AXLE_X, s * g0, AXLE_Z), "y", s * 17), "#d0d0d0", 0.005)
 
-    tyre = C(WHEEL_D / 2, (AXLE_X, s * 205, AXLE_Z), "y", s * WHEEL_W).cut(
-        C(42, (AXLE_X, s * 204, AXLE_Z), "y", s * (WHEEL_W + 2)))
+    w0 = WHEEL_YC - WHEEL_W / 2
+    tyre = C(WHEEL_D / 2, (AXLE_X, s * w0, AXLE_Z), "y", s * WHEEL_W).cut(
+        C(42, (AXLE_X, s * (w0 - 1), AXLE_Z), "y", s * (WHEEL_W + 2)))
     add(f"Wheel_tyre_130x60_{side}", "Drive", tyre, "#222222", 0.12)
-    rim = C(42, (AXLE_X, s * 208, AXLE_Z), "y", s * 54).cut(C(34, (AXLE_X, s * 256, AXLE_Z), "y", s * 8))
-    rim = fuse(rim, C(11, (AXLE_X, s * 196, AXLE_Z), "y", s * 12))
+    rim = C(42, (AXLE_X, s * (w0 + 3), AXLE_Z), "y", s * 54).cut(C(34, (AXLE_X, s * (w0 + 51), AXLE_Z), "y", s * 8))
+    rim = fuse(rim, C(11, (AXLE_X, s * (w0 - 9), AXLE_Z), "y", s * 12))
     add(f"Wheel_hub_6mm_coupling_{side}", "Drive", rim, "#2563eb", 0.08)
 
-# ---------------------------------------------------------------- casters (front)
+# ---------------------------------------------------------------- 3" casters (front)
 for s, side in ((1, "L"), (-1, "R")):
     cy = s * CASTER_Y
-    add(f"Caster_riser_block_{side}", "Chassis", B(CASTER_X - 30, CASTER_X + 30, cy - 30, cy + 30, CASTER_H, DECK["z0"]), PLY, 0.05)
-    wx = CASTER_X - 15  # wheel trails 15 mm behind the swivel axis
+    add(f"Caster_shim_5mm_{side}", "Chassis", B(CASTER_X - 32.5, CASTER_X + 32.5, cy - 25, cy + 25, CASTER_H, DECK["z0"]), "#a0805a", 0.005)
+    wx = CASTER_X - CASTER_TRAIL
     frame = fuse(
-        B(CASTER_X - 30, CASTER_X + 30, cy - 21.5, cy + 21.5, CASTER_H - 3, CASTER_H),   # 60 x 43 plate
-        C(14, (CASTER_X, cy, CASTER_H - 10), "z", 7),
-        B(wx - 8, CASTER_X + 8, cy - 12.5, cy + 12.5, CASTER_H - 12, CASTER_H - 9),
-        B(wx - 8, CASTER_X + 8, cy + 10.5, cy + 12.5, 12, CASTER_H - 9),
-        B(wx - 8, CASTER_X + 8, cy - 12.5, cy - 10.5, 12, CASTER_H - 9),
-        C(3.5, (wx, cy - 14, 20), "y", 28),
+        B(CASTER_X - 32.5, CASTER_X + 32.5, cy - 25, cy + 25, CASTER_H - 3, CASTER_H),   # 65 x 50 plate
+        C(18, (CASTER_X, cy, CASTER_H - 12), "z", 9),
+        B(wx - 10, CASTER_X + 10, cy - 17, cy + 17, CASTER_H - 15, CASTER_H - 12),
+        B(wx - 10, wx + 10, cy + 14, cy + 17, 30, CASTER_H - 15),
+        B(wx - 10, wx + 10, cy - 17, cy - 14, 30, CASTER_H - 15),
+        C(4, (wx, cy - 19, 37.5), "y", 38),
     )
-    add(f"Caster_2.25in_swivel_frame_{side}", "Chassis", frame, STEEL, 0.04)
-    add(f"Caster_2.25in_wheel_40mm_{side}", "Chassis", C(20, (wx, cy - 9.75, 20), "y", 19.5), "#3d3d3d", 0.03)
+    add(f"Caster_3in_swivel_frame_{side}", "Chassis", frame, STEEL, 0.08)
+    add(f"Caster_3in_wheel_75mm_{side}", "Chassis", C(37.5, (wx, cy - 12, 37.5), "y", 24), "#3d3d3d", 0.06)
 
-# ---------------------------------------------------------------- electronics bay (deck top z = 105)
+# ---------------------------------------------------------------- electronics bay
 Z = DECK_TOP
-BTS_X = -125
-for name, y0 in (("L", 135), ("R", -185)):
+BTS_X = -100
+for name, y0 in (("L", 75), ("R", -125)):
     x0 = BTS_X
     board = B(x0, x0 + 50, y0, y0 + 50, Z + 5, Z + 6.6)
     for (sx, sy) in ((x0 + 4, y0 + 4), (x0 + 46, y0 + 4), (x0 + 4, y0 + 46), (x0 + 46, y0 + 46)):
@@ -142,14 +155,14 @@ for name, y0 in (("L", 135), ("R", -185)):
     add(f"BTS7960_terminals_{name}", "Electronics", B(x0, x0 + 9, y0 + 3, y0 + 25, Z + 6.6, Z + 17), "#1e5aa8", 0.005)
 
 # battery at the back, over the drive wheels (more grip)
-cells = [C(9.2, (-230, iy * 18.6, Z + 9.3 + iz * 18.6), "x", 65) for iy in (-1, 0, 1) for iz in (0, 1)]
+cells = [C(9.2, (-182, iy * 18.6, Z + 9.3 + iz * 18.6), "x", 65) for iy in (-1, 0, 1) for iz in (0, 1)]
 add("Battery_3S2P_18650_pack", "Power", fuse(*cells), "#2f6db5", 0.30)
-add("Battery_BMS_3S_25A", "Power", B(-230, -170, 40, 85, Z, Z + 4), "#1b5e20", 0.02)
-add("Fuse_holder_5x20", "Power", B(-158, -125, 45, 55, Z, Z + 10), BLACK, 0.01)
-add("XT60_plug_pair", "Power", B(-158, -128, 65, 75, Z, Z + 8), "#e8c21a", 0.01)
+add("Battery_BMS_3S_40A", "Power", B(-182, -137, 38, 98, Z, Z + 4), "#1b5e20", 0.02)
+add("Fuse_holder_5x20", "Power", B(-130, -105, 42, 52, Z, Z + 10), BLACK, 0.01)
+add("XT60_plug_pair", "Power", B(-130, -105, 58, 68, Z, Z + 8), "#e8c21a", 0.01)
 
-xl = fuse(B(-60, -6, -100, -77, Z + 4, Z + 5.6), C(6, (-42, -88.5, Z + 5.6), "z", 8),
-          C(4, (-24, -88.5, Z + 5.6), "z", 10), B(-17, -9, -99, -94, Z + 5.6, Z + 14))
+xl = fuse(B(-40, 14, -110, -87, Z + 4, Z + 5.6), C(6, (-22, -98.5, Z + 5.6), "z", 8),
+          C(4, (-4, -98.5, Z + 5.6), "z", 10), B(3, 11, -109, -104, Z + 5.6, Z + 14))
 add("XL4015_buck_5V", "Power", xl, "#1565c0", 0.03)
 
 esp = fuse(B(-40, -12, -26, 26, Z + 8, Z + 9.6), B(-40, -37.5, -25, 25, Z, Z + 8), B(-14.5, -12, -25, 25, Z, Z + 8))
@@ -157,48 +170,56 @@ add("ESP32_DevKit_30pin", "Electronics", esp, "#202020", 0.01)
 add("ESP32_WROOM_module", "Electronics", B(-36, -18, -26, -0.5, Z + 9.6, Z + 12.8), "#c0c0c0", 0.002)
 
 # phone at the front, away from the motors and battery wires
-add("Phone_foam_pad", "Electronics", B(160, 236, -82, 82, Z, Z + 10), "#5c5c5c", 0.01)
-add("Phone_Redmi_K50_Pro_163x76x8.5", "Electronics", B(160.4, 236.4, -81.55, 81.55, Z + 10, Z + 18.5), "#15171c", 0.23)
+add("Phone_foam_pad", "Electronics", B(100, 176, -82, 82, Z, Z + 10), "#5c5c5c", 0.01)
+add("Phone_Redmi_K50_Pro_163x76x8.5", "Electronics", B(100.4, 176.4, -81.55, 81.55, Z + 10, Z + 18.5), "#15171c", 0.23)
 
 # main switch (kill switch) in the rear wall
-add("Rocker_switch_body_15A", "Power", fuse(B(-253, -250, 135, 165, 120.5, 134.5), B(-250, -215, 136, 164, 121.25, 133.75)), BLACK, 0.008)
-add("Rocker_switch_rocker_15A", "Power", B(-256, -253, 137, 163, 122, 133), "#d62828", 0.002)
+add("Rocker_switch_body_15A", "Power", fuse(B(X0 - 3, X0, SW_Y - 15, SW_Y + 15, SONAR_Z - 7, SONAR_Z + 7),
+                                             B(X0, X0 + 35, SW_Y - 14, SW_Y + 14, SONAR_Z - 6.25, SONAR_Z + 6.25)), BLACK, 0.008)
+add("Rocker_switch_rocker_15A", "Power", B(X0 - 6, X0 - 3, SW_Y - 13, SW_Y + 13, SONAR_Z - 5.5, SONAR_Z + 5.5), "#d62828", 0.002)
 
-for i, yc in enumerate((140, 0, -140)):
-    hc = fuse(B(262, 263.6, yc - 22.5, yc + 22.5, 70, 90),
-              C(8, (263.6, yc + 13, 80), "x", 12), C(8, (263.6, yc - 13, 80), "x", 12))
+FX = X1 + 12
+for i, yc in enumerate((FRONT_Y, 0, -FRONT_Y)):
+    hc = fuse(B(FX, FX + 1.6, yc - 22.5, yc + 22.5, FRONT_Z - 10, FRONT_Z + 10),
+              C(8, (FX + 1.6, yc + 13, FRONT_Z), "x", 12), C(8, (FX + 1.6, yc - 13, FRONT_Z), "x", 12))
     if yc:  # outer front sensors turned 30 degrees outward on a small wooden wedge
-        hc.rotate(V(262, yc, 80), V(0, 0, 1), 30 if yc > 0 else -30)
+        hc.rotate(V(FX, yc, FRONT_Z), V(0, 0, 1), 30 if yc > 0 else -30)
     add(f"HC-SR04_Front_{['L', 'C', 'R'][i]}", "Sensors", hc, "#1e4fa0", 0.009)
 
-# rear pair and one per side: board on the inside of the wall, transducers through 16.5 mm holes (flush outside)
 for side, yc in (("L", REAR_SONAR_Y), ("R", -REAR_SONAR_Y)):
-    hc = fuse(B(-238, -236.4, yc - 22.5, yc + 22.5, SONAR_Z - 10, SONAR_Z + 10),
-              C(8, (-238, yc + 13, SONAR_Z), "x", -12), C(8, (-238, yc - 13, SONAR_Z), "x", -12))
+    hc = fuse(B(X0 + 12, X0 + 13.6, yc - 22.5, yc + 22.5, SONAR_Z - 10, SONAR_Z + 10),
+              C(8, (X0 + 12, yc + 13, SONAR_Z), "x", -12), C(8, (X0 + 12, yc - 13, SONAR_Z), "x", -12))
     add(f"HC-SR04_Rear_{side}", "Sensors", hc, "#1e4fa0", 0.009)
 for s, side in ((1, "L"), (-1, "R")):
     xc = SIDE_SONAR_X
-    hc = fuse(B(xc - 22.5, xc + 22.5, *Y(186.4, 188, s), SONAR_Z - 10, SONAR_Z + 10),
-              C(8, (xc + 13, s * 188, SONAR_Z), "y", s * 12), C(8, (xc - 13, s * 188, SONAR_Z), "y", s * 12))
+    hc = fuse(B(xc - 22.5, xc + 22.5, *Y(IW - 1.6, IW, s), SONAR_Z - 10, SONAR_Z + 10),
+              C(8, (xc + 13, s * IW, SONAR_Z), "y", s * 12), C(8, (xc - 13, s * IW, SONAR_Z), "y", s * 12))
     add(f"HC-SR04_Side_{side}", "Sensors", hc, "#1e4fa0", 0.009)
 
-# ---------------------------------------------------------------- cargo box
+# ---------------------------------------------------------------- cargo box (about 25 L)
 bx0, bx1, by, bz0, bh = BOX["x0"], BOX["x1"], BOX["y"], BOX["z0"], BOX["h"]
 body = B(bx0, bx1, -by, by, bz0, bz0 + bh).cut(B(bx0 + 2.5, bx1 - 2.5, -by + 2.5, by - 2.5, bz0 + 2.5, bz0 + bh + 1))
 body = body.fuse(B(bx0 - 2.5, bx1 + 2.5, -by - 2.5, by + 2.5, bz0 + bh - 8, bz0 + bh).cut(
     B(bx0 + 2.5, bx1 - 2.5, -by + 2.5, by - 2.5, bz0 + bh - 9, bz0 + bh + 1))).removeSplitter()
-add("Cargo_box_48L_500x400x250", "Cargo", body, "#e6eaef", 1.20, alpha=0.55)
+add("Cargo_box_25L_400x300x250", "Cargo", body, "#e6eaef", 0.70, alpha=0.55)
 lid_top = bz0 + bh + BOX["lid"]
 lid = B(bx0 - 3, bx1 + 3, -by - 3, by + 3, bz0 + bh, lid_top).cut(
     B(bx0 - 0.5, bx1 + 0.5, -by - 0.5, by + 0.5, bz0 + bh - 1, lid_top - 2.5))
-add("Cargo_box_lid", "Cargo", lid, "#2b6cb0", 0.40)
-add("Payload_5kg_example_300x250x150", "Payload", B(-150, 150, -125, 125, bz0 + 2.5, bz0 + 152.5), "#c49a6c", 5.0)
+add("Cargo_box_lid", "Cargo", lid, "#2b6cb0", 0.25)
+# 5 food parcels of about 190 x 140 x 75 mm, 0.6 kg each (3 kg): one stack of 3 at the back, 2 at the front
+n = 0
+for x0, count in ((-175, 3), (15, 2)):
+    for k in range(count):
+        n += 1
+        z0 = bz0 + 2.5 + k * 76
+        add(f"Payload_parcel_{n}_190x140x75", "Payload", B(x0, x0 + 140, -95, 95, z0, z0 + 75), "#c49a6c" if n % 2 else "#b5875a", 0.6)
 
-cam_pivot = V(bx1 + 5, 0, 304)
-cam = fuse(B(bx1 + 5, bx1 + 33, -45, 45, 290, 318), C(7.5, (bx1 + 33, 0, 306), "x", 3))
+CAM_Z = bz0 + 154
+cam_pivot = V(bx1 + 5, 0, CAM_Z)
+cam = fuse(B(bx1 + 5, bx1 + 33, -45, 45, CAM_Z - 14, CAM_Z + 14), C(7.5, (bx1 + 33, 0, CAM_Z + 2), "x", 3))
 cam.rotate(cam_pivot, V(0, 1, 0), CAM_TILT)
 add("Webcam_HD-U01_1080p", "Sensors", cam, "#151515", 0.08)
-add("Webcam_bracket", "Sensors", B(bx1, bx1 + 5, -15, 15, 284, 326), BLACK, 0.01)
+add("Webcam_bracket", "Sensors", B(bx1, bx1 + 5, -15, 15, CAM_Z - 20, CAM_Z + 22), BLACK, 0.01)
 
 sz = bz0 + bh - 32
 servo = fuse(B(bx0 - 12.2, bx0, -11.4, 11.4, sz, sz + 28.5), B(bx0 - 12.2, bx0, -16.4, 16.4, sz + 15, sz + 17.5),
@@ -268,7 +289,9 @@ for p in parts:
 
 layout = dict(deck=DECK, deck_top=DECK_TOP, wheel_d=WHEEL_D, wheel_w=WHEEL_W, axle_x=AXLE_X,
               axle_z=AXLE_Z, gb_z=GB_Z, wheel_yc=WHEEL_YC, caster_x=CASTER_X, caster_y=CASTER_Y,
-              caster_h=CASTER_H, riser=RISER, wall_h=WALL_H, box_z0=BOX_Z0, box=BOX, cam_tilt=CAM_TILT,
+              caster_h=CASTER_H, caster_trail=CASTER_TRAIL, riser=RISER, spacer=SPACER, strip_z0=STRIP_Z0,
+              front_y=FRONT_Y, front_z=FRONT_Z, side_sonar_x=SIDE_SONAR_X, rear_sonar_y=REAR_SONAR_Y,
+              wire_hole=WIRE_HOLE, inner_w=IW, wall_h=WALL_H, box_z0=BOX_Z0, box=BOX, cam_tilt=CAM_TILT,
               cam_pivot=[cam_pivot.x, cam_pivot.y, cam_pivot.z])
 with open(os.path.join(OUT_BUILD, "mesh.json"), "w") as f:
     json.dump(dict(layout=layout, parts=mesh), f)

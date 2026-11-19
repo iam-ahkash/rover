@@ -1,14 +1,14 @@
 # Delivery rover: 3D model and build pack
 
-A self-driving delivery rover that carries a 5 kg package. The storage box is the whole body, the electronics sit in a closed compartment underneath it, and the phone inside runs the self-driving app in this repository.
+A self-driving food-delivery rover that carries 3 to 5 parcels (about 3 kg). Revision B: a smaller rover with a 25 L box; the changes are highlighted in yellow in both PDFs. The storage box is the whole body, the electronics sit in a closed compartment underneath it, and the phone inside runs the self-driving app in this repository.
 
 ![Delivery rover](docs/img/render_iso.png)
 
 | | |
 |---|---|
-| Size (length × width × height) | 549 × 530 × 415 mm |
-| Mass, empty / with a 5 kg package | 6.1 kg / 11.1 kg |
-| Drive | 2 × JGB37-520 60 RPM motors with Hall encoders, 130 mm wheels, 2 × 2.25" swivel casters at the front |
+| Size (length × width × height) | 449 × 430 × 427 mm |
+| Mass, empty / with 3 kg of parcels | 4.9 kg / 7.9 kg |
+| Drive | 2 × JGB37-520 60 RPM motors with Hall encoders, 130 mm wheels, 2 × 3" (75 mm) swivel casters at the front for uneven tar |
 | Speed | 0.41 m/s |
 | Sensors | phone (GPS, compass, IMU), USB webcam, 7 × HC-SR04 ultrasonic (front, sides, rear) |
 | Power | 3S2P 18650 pack (11.1 V, about 55 Wh) |
@@ -16,7 +16,7 @@ A self-driving delivery rover that carries a 5 kg package. The storage box is th
 ## Documents
 
 - [Build pack (PDF)](docs/delivery_rover_build_pack.pdf): renders, dimensioned drawings, ultrasonic coverage, plywood cut plan, drilling template, materials, wiring and ESP32 pin map, assembly steps, weight and balance.
-- [Parts list (PDF)](docs/delivery_rover_BOM.pdf): every part with shop links and prices, fasteners and tools. Colombo shops first (alphatronic.lk, tronic.lk); only the wheels and motor brackets come from duino.lk. About Rs 38,200 in all.
+- [Parts list (PDF)](docs/delivery_rover_BOM.pdf): every part with shop links and prices, fasteners and tools. Colombo shops first (alphatronic.lk, tronic.lk); only the wheels and motor brackets come from duino.lk. About Rs 35,900 in all.
 - [3D viewer](docs/rover_viewer.html): download the file and open it in a browser to turn the model, hide the box and click parts. It loads three.js from the internet.
 
 ## 3D files
@@ -44,4 +44,4 @@ python3 src/make_bom_pdf.py    # parts list PDF
 
 The 3D pictures in `docs/img/render_*.png` are screenshots of `docs/rover_viewer.html?shot=1&view=iso` taken with a headless browser.
 
-Two sizes are typical values, not measured: the 37 mm motor bracket and the webcam. Check yours. The casters are tronic.lk's 2.25" swivel (60 mm high), so the riser under each is 33 mm (93 mm minus the caster's height).
+Three sizes are typical values, not measured: the 37 mm motor bracket, the 3" caster (about 100 mm high) and the webcam. Check yours. A 12 mm plywood spacer under each motor bracket puts the deck underside 105 mm up, so the shim under each caster is 105 mm minus the caster's height.

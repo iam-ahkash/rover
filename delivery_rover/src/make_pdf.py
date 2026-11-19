@@ -14,10 +14,12 @@ def rs(n):
 
 
 # ------------------------------------------------------------------ bought parts
+CH = "<span class='chg'>changed</span> "
+NEW = "<span class='chg'>new</span> "
 T = "https://tronic.lk/product/"
 AL = "https://alphatronic.lk/product/"
-DARAZ = [("JGB37-520 12 V 60 RPM geared motor with Hall encoder. Options: <b>Without Stand / 60RPM / 12V</b>", 2, 4909,
-          "https://www.daraz.lk/products/jgb37-520-hall-encoder-dc-geared-motor-6v12v-reversible-high-torque-21kgcm-all-metal-geared-dc-motor-with-hall-encoder-i750970075.html")]
+DARAZ = [(CH + "JGB37-520 12 V 60 RPM geared motor with Hall encoder. Options: <b>Without Stand / 60RPM / 12V</b> (link now opens on this option)", 2, 4909,
+          "https://www.daraz.lk/products/jgb37-520-hall-encoder-dc-geared-motor-6v12v-reversible-high-torque-21kgcm-all-metal-geared-dc-motor-with-hall-encoder-i750970075-s2878199189.html")]
 ALPHA = [
     ("Double BTS7960 43 A motor driver (1 per motor)", 2, 1250, AL + "double-bts7960-43a-motor-driver-module/"),
     ("XL4015 buck converter, set to 5.1 V", 1, 340, AL + "xl4015-dc-to-dc-step-down-buck-adjustable-module/"),
@@ -38,14 +40,12 @@ TRONIC = [
     ("18650 3.7 V 3200 mAh cell (Good Quality)", 6, 620, T + "18650-flat-top-3-7v-3200ma-li-ion-rechargeable-battery-"),
     ("3S 40 A BMS protection board", 1, 420, T + "li-ion-18650-3s-40a-bms-pcm-battery-protection-board"),
     ("12.6 V 2 A SMPS adapter (charger; the BMS stops the charge)", 1, 850, T + "12-6v-2a-smps-power-adapter"),
-    ("Caster 2.25\" TPR swivel, 60 mm high, plate 60 × 43", 2, 960, T + "caster-wheel-2-25-inch-small-tpr-swivel-silent"),
     ("XT60 male and female pair (battery plug)", 1, 80, T + "xt60-male-female-bullet-connectors-plugs-for-rc-lipo-ba"),
     ("SPDT rocker switch 15 A 250 V (main power and kill switch)", 1, 30, T + "spdt-black-rectangular-rocker-switch-big-3-pin-250vac-1"),
     ("Glass fuse 10 A, 5 × 20 mm (1 spare)", 2, 4, T + "glass-fuse-230vac-10a-5x20mm"),
     ("Vero dot board 90 × 70 mm (echo dividers, power rail)", 2, 50, T + "vero-dot-board-90x70mm-single-layer-prototype-pcb"),
     ("Jumper wires female to female, 30 cm, strip of 40", 1, 180, T + "long-jumper-wire-female-to-female-1x40-pin-30cm"),
     ("OTG adapter, USB-C male to USB-A female (phone to webcam)", 1, 80, T + "otg-adapter-type-c"),
-    ("M4 × 20 pan-head bolt (brackets to deck)", 8, 10, T + "m4-20mm-pan-head-bolt"),
     ("M3 nylon spacer 5 mm (under the boards)", 12, 2, T + "m3-black-nylon-spacer-h-5mm-id-3mm-od-7mm-standoff-wash"),
     ("Rubber grommet 8 mm (webcam cable through the box floor)", 2, 5, T + "rubber-grommets-8mm"),
 ]
@@ -54,16 +54,17 @@ DUINO = [
     ("GA/GB 37 mm geared motor mounting bracket: alphatronic is out of stock", 2, 580, "https://www.duino.lk/product/ga-gb-37mm-diameter-dc-geared-motor/"),
 ]
 SHOP = [
-    ("Plastic storage box with lid, about 48 L, footprint 500 × 400 (or smaller), about 250 high <span class='new'>body</span>", "1", 3000),
-    ("12 mm plywood, 2 ft × 2 ft (610 × 610): deck, 4 walls, sonar strip, 6 risers", "1", 1000),
-    ("M4 × 60 bolts, nyloc nuts and 25 mm washers (casters), wood screws 4 × 40 and 4 × 30, M4 washers", "set", 600),
+    (CH + "Plastic storage box with lid, about 25 L: 400 × 300 footprint (or a little smaller), about 250 high. Holds 3 to 5 food parcels", "1", 1500),
+    (NEW + "3\" (75 mm) swivel caster with top plate, about 100 mm high, rated 25 kg or more (hardware shop or Daraz)", "2", 1200),
+    (CH + "12 mm plywood, 2 ft × 2 ft (610 × 610): deck, 4 walls, sonar strip, 2 bracket spacers", "1", 1000),
+    (CH + "M4 × 40 bolts (brackets, through the spacers), M4 × 30 bolts and nyloc nuts (casters), M4 washers, wood screws 4 × 40 and 4 × 30", "set", 600),
     ("Spot-weld the 6 cells into a 3S2P pack with nickel strip (battery or phone-repair shop)", "1", 500),
     ("Double-sided foam tape and a Velcro strap (ESP32, BMS, battery)", "set", 150),
 ]
 FASTENERS = [
     ("Motor to bracket", "M3 × 6 machine screw", 8, "4 per motor, into the gearbox face"),
-    ("Bracket to deck underside", "M4 × 20 pan-head bolt + M4 nut + washer", 8, "mark through the bracket holes"),
-    ("Caster + riser to deck", "M4 × 60 bolt + nyloc nut + 2 washers", 8, "through caster plate, 33 mm riser and deck"),
+    (CH + "Bracket + spacer to deck underside", "M4 × 40 bolt + M4 nut + washer", 8, "through bracket, 12 mm spacer and deck"),
+    (CH + "Caster + shim to deck", "M4 × 30 bolt + nyloc nut + 2 washers", 8, "through caster plate, 5 mm shim and deck"),
     ("Walls to deck", "4 × 40 countersunk wood screw", 14, "up through the deck (holes 3–16 on the template)"),
     ("Wall corners", "4 × 30 wood screw + PVA glue", 8, "2 per corner"),
     ("Box floor to wall tops", "4 × 30 wood screw + 25 mm washer", 6, "from inside the box, down into the wall tops"),
@@ -80,14 +81,14 @@ TOOLS = ["Drill with 3, 4.5, 8 mm bits; 16 mm spade bit or hole saw", "Jigsaw or
          "Soldering iron, solder, flux; hot-glue gun", "Multimeter (set the XL4015 to 5.1 V before connecting anything)", "Wire stripper; heat gun or lighter for heat shrink"]
 
 DIMS = [
-    ("Deck (plywood)", "500 × 400 × 12", "cut list"),
-    ("Electronics walls", "500 × 45 × 12 (2), 376 × 45 × 12 (2)", "cut list"),
-    ("Cargo box (body)", "500 × 400 × 250, lid 506 × 406 × 15", "pick a box this size or smaller"),
+    (CH + "Deck (plywood)", "400 × 300 × 12", "cut list"),
+    (CH + "Electronics walls", "400 × 45 × 12 (2), 276 × 45 × 12 (2)", "cut list"),
+    (CH + "Cargo box (body), about 25 L", "400 × 300 × 250, lid 406 × 306 × 15", "pick a box this size or a little smaller"),
     ("Wheel", "Ø130 × 60, 6 mm hub", "listing"),
     ("JGB37-520 motor", "gearbox Ø37 × 26.5, can Ø35.5 × 30.5, encoder Ø34 × 17; shaft Ø6 D, 7 mm off centre", "datasheet, check yours"),
     ("37 mm bracket", "plate 44 × 46, flange 44 × 30, 2.5 thick (modelled)", "measure yours"),
-    ("2.25\" caster (tronic)", "60 high, plate 60 × 43, wheel Ø40 × 19.5, about 15 mm trail", "listing; riser = 93 − caster height"),
-    ("Riser block", "60 × 60 × 33 (3 × 12 mm plywood, planed to 33)", "cut list"),
+    (CH + "3\" caster", "about 100 high, plate 65 × 50, wheel Ø75 × 24, about 25 mm trail", "typical, measure yours: shim = 105 − caster height"),
+    (NEW + "Bracket spacer / caster shim", "44 × 30 × 12 plywood (2) / 65 × 50 × 5 (2)", "cut list / hardboard or washers"),
     ("3S2P pack", "65 × 56 × 37 (6 × 18650 Ø18.4 × 65)", "calculated"),
     ("BMS 3S 40 A", "60 × 45 × 4", "typical"),
     ("BTS7960 module", "50 × 50, about 37 high with heatsink", "typical"),
@@ -118,15 +119,15 @@ PINS = [
 STEPS = [
     "Cut the plywood (cut plan). Glue and screw the four walls into a frame, then screw the frame to the deck from below (14 countersunk screws).",
     "Drill the deck: two Ø16 wire holes, the wall-screw holes, then the bracket and caster holes by marking through the parts. Cut the 40 × 15 vent slots and the Ø16.5 sensor holes in the walls, and the 28 × 12.5 switch hole in the rear wall (thin the wall to about 2 mm around it from inside so the clips grip).",
-    "Fit the motors to the brackets (shaft at the bottom, 7 mm below the gearbox centre), bolt the brackets under the deck with the axle 140 mm from the rear edge, and push the wheels on and tighten their grub screws.",
-    "Glue three 60 × 60 risers into a block for each caster, plane it to 33 mm, put it under the caster and bolt them through the deck, 445 mm from the rear edge and 60 mm in from each side. Check the deck sits level; sand the risers if not.",
+    CH + "Fit the motors to the brackets (shaft at the bottom, 7 mm below the gearbox centre). Put a 44 × 30 plywood spacer on each bracket flange and bolt both under the deck with M4 × 40 bolts, axle 115 mm from the rear edge. Push the wheels on and tighten their grub screws.",
+    CH + "Bolt the 3\" casters under the deck with a 5 mm shim each (shim = 105 − caster height), swivel centres 65 mm from the front edge and 90 mm either side of the centre line. Check the deck sits level; change the shims if not.",
     "Have the cells spot-welded as 3S2P, solder the BMS balance leads, and fit the XT60. Charge it once with the 12.6 V adapter, through the BMS.",
     "Set the XL4015 to 5.1 V with the multimeter <b>before</b> connecting anything to it.",
     "Mount the boards (layout drawing). Wire the power path: battery, XT60, fuse, rocker switch, then the BTS7960s and the XL4015. Join all grounds at one point.",
     "Build the 7 echo dividers on perfboard, wire the sensors and the encoders to the ESP32 (pin map), and route the motor and encoder cables up through the Ø16 holes.",
     "Screw the sonar strip to the front edge; glue the front-left and front-right sensors on 30° wedges. Fit the wall sensors from inside.",
     "Put the phone on the foam pad (screen up, at the front), plug in the OTG adapter and lead the webcam cable to the webcam through a small grommet in the box floor.",
-    "Screw the box floor down onto the wall tops, mount the webcam (about 300 mm up, tilted 12° down) and the servo latch, and calibrate the phone compass with everything powered.",
+    "Screw the box floor down onto the wall tops, mount the webcam (about 316 mm up, tilted 12° down) and the servo latch, and calibrate the phone compass with everything powered.",
 ]
 
 daraz = sum(q * p for _, q, p, _ in DARAZ)
@@ -144,7 +145,7 @@ def table_buy(rows, start):
     out = ["<table><tr><th>#</th><th>Part</th><th class='n'>Qty</th><th class='n'>Each</th><th class='n'>Total</th><th>Link</th></tr>"]
     for i, (name, q, p, url) in enumerate(rows):
         short = url.split("//")[1].split("/")[0].replace("www.", "")
-        out.append(f"<tr><td>{start + i}</td><td>{name}</td><td class='n'>{q}</td><td class='n'>{rs(p)}</td><td class='n'>{rs(q * p)}</td>"
+        out.append(f"<tr class='{'chgrow' if 'chg' in name else ''}'><td>{start + i}</td><td>{name}</td><td class='n'>{q}</td><td class='n'>{rs(p)}</td><td class='n'>{rs(q * p)}</td>"
                    f"<td><a href='{url}'>{short}</a></td></tr>")
     out.append("</table>")
     return "".join(out)
@@ -172,6 +173,10 @@ a {{ color: #2b6cb0; text-decoration: none; }}
 .grid2 {{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }}
 .note {{ color: #555; font-size: 8pt; margin: 3px 0; }}
 .warn {{ background: #fff7e0; border-left: 3px solid #e0a800; padding: 5px 8px; margin: 6px 0; font-size: 8.4pt; }}
+.chg {{ font-size: 6.5pt; background: #d97706; color: white; border-radius: 6px; padding: 0 5px; text-transform: uppercase; font-weight: bold; }}
+tr.chgrow td, li.chgrow {{ background: #fff4c2; }}
+.revb {{ background: #fff4c2; border-left: 4px solid #d97706; padding: 6px 10px; margin: 6px 0; font-size: 8.4pt; }}
+.revb ul {{ margin: 2px 0; }}
 .new {{ font-size: 7pt; background: #dbeafe; color: #1e40af; border-radius: 6px; padding: 0 5px; }}
 .total td {{ font-weight: bold; font-size: 10pt; border-top: 2px solid #333; }}
 .kv td:first-child {{ color: #555; width: 55%; }}
@@ -181,22 +186,31 @@ pre {{ font-size: 7.6pt; background: #f8fafc; border: 1px solid #ddd; padding: 6
 </style></head><body>
 
 <h1>Delivery Rover: Build Pack</h1>
-<p class="sub">5 kg payload · the storage box is the whole body · electronics in a closed compartment underneath · phone inside as the brain · 7 ultrasonic sensors · all sizes in mm · 19 Nov 2026</p>
-<img class="fig" src="img/render_iso.png" style="width:82%">
+<p class="sub"><b>Rev B</b> · 3 kg of food (3 to 5 parcels) · the storage box is the whole body · electronics in a closed compartment underneath · phone inside as the brain · 7 ultrasonic sensors · all sizes in mm · 19 Nov 2026</p>
+<img class="fig" src="img/render_iso.png" style="width:44%">
+<div class="revb"><b>What changed in revision B (19 Nov 2026).</b> Highlighted <span class='chg'>changed</span> / <span class='chg'>new</span> in yellow through this pack.
+<ul>
+<li>Payload is now 3 kg of food (3 to 5 parcels) instead of 5 kg. Pizza is left for a later add-on.</li>
+<li>Box is about 25 L (400 × 300 × 250) instead of 48 L, and the whole rover shrank to match: {O['length']} × {O['width']} × {O['height']} mm (was 549 × 530 × 415). Deck 400 × 300.</li>
+<li>Front casters are 3" (75 mm wheels) for uneven tar, instead of the 2.25" ones. A 12 mm plywood spacer under each motor bracket lifts the deck 12 mm to fit them; the 33 mm risers are gone.</li>
+<li>Drive axle moved to 115 mm from the rear edge so the taller, shorter rover doesn't tip back easily.</li>
+<li>Same motors (JGB37-520 with encoders), drivers, battery, 7 sensors and wiring. The electronics are rearranged to fit the 376 × 276 compartment.</li>
+<li>Parts list: box, casters, plywood use and bolt lengths changed; total now about Rs {rs(total)} (was Rs 38,244).</li>
+</ul></div>
 <div class="grid2">
 <table class="kv">
 <tr><th colspan="2">Overall</th></tr>
 <tr><td>Length × width × height</td><td>{O['length']} × {O['width']} × {O['height']}</td></tr>
-<tr><td>Deck (and box footprint)</td><td>500 × 400, top at {O['deck_top']}</td></tr>
+<tr><td>Deck (and box footprint)</td><td>400 × 300, top at {O['deck_top']}</td></tr>
 <tr><td>Wheelbase (axle to caster swivel)</td><td>{O['wheelbase']}</td></tr>
 <tr><td>Track (wheel centres)</td><td>{O['track']}</td></tr>
 <tr><td>Ground clearance (under the motors)</td><td>{O['ground_clearance']}</td></tr>
-<tr><td>Cargo space inside the box</td><td>about 495 × 395 × 245 (48 L)</td></tr>
-<tr><td>Electronics compartment</td><td>476 × 376 × 45 high</td></tr>
+<tr><td>Cargo space inside the box</td><td>about 395 × 295 × 245 (28 L): 6 parcels of 19 × 14 × 7.5 cm</td></tr>
+<tr><td>Electronics compartment</td><td>376 × 276 × 45 high</td></tr>
 </table>
 <table class="kv">
 <tr><th colspan="2">Performance (from the model)</th></tr>
-<tr><td>Rover mass / with 5 kg package</td><td>{A['mass_rover']} kg / {A['mass_total']} kg</td></tr>
+<tr><td>Rover mass / with 3 kg of parcels</td><td>{A['mass_rover']} kg / {A['mass_total']} kg</td></tr>
 <tr><td>Speed (60 RPM, Ø130 wheels)</td><td>{A['speed']} m/s</td></tr>
 <tr><td>Weight on the drive wheels</td><td>{A['drive_share']} %</td></tr>
 <tr><td>Torque needed per motor (8% ramp + accel.)</td><td>{A['torque_kgcm']} kg·cm</td></tr>
@@ -205,7 +219,7 @@ pre {{ font-size: 7.6pt; background: #f8fafc; border: 1px solid #ddd; padding: 6
 <tr><td>Camera height / sees ground from</td><td>{O['camera_height']:.0f} / {A['cam_ground_ahead']} ahead</td></tr>
 </table>
 </div>
-<div class="grid2"><img class="fig" src="img/render_open.png"><img class="fig" src="img/render_rear.png"></div>
+<div class="grid2"><img class="fig" src="img/render_open.png" style="width:80%"><img class="fig" src="img/render_rear.png" style="width:80%"></div>
 <p class="note">Left: box removed, showing the electronics compartment. Right: rear, with the main switch and the two rear sensors in the rear wall.</p>
 
 <div class="page"></div>
@@ -239,26 +253,27 @@ pre {{ font-size: 7.6pt; background: #f8fafc; border: 1px solid #ddd; padding: 6
 <h3>alphatronic.lk (Colombo): Rs {rs(alpha)}</h3>{table_buy(ALPHA, n1)}
 <h3>tronic.lk (Colombo): Rs {rs(tronic)}</h3>{table_buy(TRONIC, n2)}
 <h3>duino.lk (Kandy, delivered): Rs {rs(duino)}</h3>{table_buy(DUINO, n3)}
+<div class="revb"><b>Removed in rev B:</b> tronic 2.25" casters (2 × Rs 960) and tronic M4 × 20 bolts (8 × Rs 10). The 3" casters are not stocked at tronic or alphatronic, so they are on the hardware-shop list.</div>
 <p class="note">ESP32: using your own. Search tronic.lk with Google ("site:tronic.lk ..."): the shop's own search misses items.</p>
 <h3>Hardware shop (estimates): about Rs {rs(shop)}</h3>
 <table><tr><th>#</th><th>Item</th><th class="n">Qty</th><th class="n">About</th></tr>
-{''.join(f"<tr><td>{n4 + i}</td><td>{n}</td><td class='n'>{q}</td><td class='n'>{rs(p)}</td></tr>" for i, (n, q, p) in enumerate(SHOP))}</table>
+{''.join(f"<tr class='{'chgrow' if 'chg' in n else ''}'><td>{n4 + i}</td><td>{n}</td><td class='n'>{q}</td><td class='n'>{rs(p)}</td></tr>" for i, (n, q, p) in enumerate(SHOP))}</table>
 <table>
 <tr><td>daraz.lk</td><td class="n">{rs(daraz)}</td></tr><tr><td>alphatronic.lk (Colombo)</td><td class="n">{rs(alpha)}</td></tr>
 <tr><td>tronic.lk (Colombo)</td><td class="n">{rs(tronic)}</td></tr><tr><td>duino.lk (Kandy)</td><td class="n">{rs(duino)}</td></tr>
 <tr><td>Hardware shop (estimate)</td><td class="n">{rs(shop)}</td></tr>
 <tr><td>Delivery (duino about 480, Daraz about 350; collect the Colombo orders yourself)</td><td class="n">about {rs(delivery)}</td></tr>
 <tr class="total"><td>Total (using your own phone and ESP32)</td><td class="n">≈ Rs {rs(total)}</td></tr></table>
-<div class="warn"><b>About Rs {rs(total - 35000)} over the Rs 35,000 budget.</b> The motors (Rs 9,818) and the full-body box (about Rs 3,000) are the biggest costs. The hardware-shop prices are estimates; a cheaper box is the easiest saving.</div>
+<div class="warn"><b>About Rs {rs(total - 35000)} over the Rs 35,000 budget</b> (was Rs 3,244 over). The motors (Rs 9,818) are the biggest cost. The hardware-shop prices are estimates, so shopping around for the box and casters could close the gap.</div>
 
 <div class="page"></div>
 <h2>Fasteners, consumables and tools</h2>
 <table><tr><th>Where</th><th>What</th><th class="n">Qty</th><th>Note</th></tr>
-{''.join(f"<tr><td>{a}</td><td>{b}</td><td class='n'>{c}</td><td>{d}</td></tr>" for a, b, c, d in FASTENERS)}</table>
+{''.join(f"<tr class='{'chgrow' if 'chg' in a else ''}'><td>{a}</td><td>{b}</td><td class='n'>{c}</td><td>{d}</td></tr>" for a, b, c, d in FASTENERS)}</table>
 <h3>Tools</h3><ul>{''.join(f"<li>{t}</li>" for t in TOOLS)}</ul>
 <h2>Component sizes used in the model</h2>
 <table><tr><th>Part</th><th>Size (mm)</th><th>Source</th></tr>
-{''.join(f"<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>" for a, b, c in DIMS)}</table>
+{''.join(f"<tr class='{'chgrow' if 'chg' in a else ''}'><td>{a}</td><td>{b}</td><td>{c}</td></tr>" for a, b, c in DIMS)}</table>
 
 <div class="page"></div>
 <h2>Wiring and ESP32 pin map</h2>
@@ -273,7 +288,7 @@ All grounds joined at one point near the XL4015.</pre>
 {''.join(f"<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>" for a, b, c in PINS)}</table>
 <p class="note">5 V power budget: ESP32 about 250 mA, 7 sensors about 105 mA, servo up to 700 mA when moving. The XL4015 gives 5 A, so there is plenty of headroom.</p>
 <h2>Assembly order</h2>
-<ol>{''.join(f"<li>{s}</li>" for s in STEPS)}</ol>
+<ol>{''.join(f"<li class='{'chgrow' if 'chg' in s else ''}'>{s}</li>" for s in STEPS)}</ol>
 
 <div class="page"></div>
 <h2>Weight and balance</h2>
@@ -289,7 +304,7 @@ All grounds joined at one point near the XL4015.</pre>
 <tr><td>Torque per motor needed</td><td>{A['torque_kgcm']} kg·cm</td></tr>
 <tr><td>Motor rating (60 RPM, continuous)</td><td>about 4–5 kg·cm</td></tr>
 </table>
-<div class="warn">At {A['mass_total']} kg loaded, an 8% ramp while speeding up needs about {A['torque_kgcm']} kg·cm per motor: at the top of the motors' continuous rating. That is fine on flat paving (about 2 kg·cm). On ramps, accelerate gently, or keep the package to 4 kg.</div>
+<div class="warn">At {A['mass_total']} kg loaded, an 8% ramp while speeding up needs about {A['torque_kgcm']} kg·cm per motor, inside the motors' continuous rating (about 4–5 kg·cm). The spare torque helps over cracks and patch edges on uneven tar.</div>
 <p class="note">Put heavy packages at the back of the box, over the drive wheels, for grip. The battery is already at the back of the compartment for the same reason.</p>
 </div></div>
 <h2>3D files</h2>

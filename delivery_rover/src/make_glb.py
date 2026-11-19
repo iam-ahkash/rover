@@ -87,6 +87,8 @@ print("glb", len(glb) // 1024, "KB", len(nodes), "nodes")
 
 # ------------------------------------------------------------------ viewer (GLB embedded, works offline except three.js from the CDN)
 b64 = base64.b64encode(glb).decode()
-html = open(os.path.join(ROOT, "src", "viewer_template.html")).read().replace("__GLB_BASE64__", b64).replace("__DIMS__", "549 × 530 × 415")
+bbs = np.array([p["bbox"] for p in data["parts"] if not p["name"].startswith("Payload")])
+dims = f"{bbs[:, 1].max() - bbs[:, 0].min():.0f} × {bbs[:, 3].max() - bbs[:, 2].min():.0f} × {bbs[:, 5].max():.0f}"
+html = open(os.path.join(ROOT, "src", "viewer_template.html")).read().replace("__GLB_BASE64__", b64).replace("__DIMS__", dims)
 open(os.path.join(ROOT, "docs", "rover_viewer.html"), "w").write(html)
 print("viewer written")
